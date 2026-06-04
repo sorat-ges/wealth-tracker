@@ -11,11 +11,13 @@ The app will be designed first for iPhone 17 portrait use and will remain respon
 
 ## Product Scope
 
-Version 1 is a local-first PWA deployed from GitHub to Vercel. It stores user data locally in the browser, works offline after first load, and supports manual export/import backup.
+Version 1 is a Firebase-backed PWA deployed from GitHub to Vercel. It uses Google login, stores each user's data in Cloud Firestore, uses Firestore's offline cache for local resilience, and supports manual export/import backup.
 
 Included in v1:
 
 - One main currency for the whole app.
+- Google login through Firebase Auth.
+- Per-user Cloud Firestore storage.
 - Manual asset setup and daily value updates.
 - Market assets with quantity, average cost, and manually entered current price.
 - Non-market assets with manually entered current value.
@@ -30,8 +32,6 @@ Excluded from v1:
 
 - Bank sync.
 - Broker sync.
-- Login accounts.
-- Cloud database.
 - Multi-user support.
 - Tax reports.
 - Full transaction ledger.
@@ -43,7 +43,9 @@ The app will use:
 
 - React, Vite, and TypeScript.
 - PWA manifest and service worker.
-- IndexedDB through Dexie for local persistence.
+- Firebase Auth with Google sign-in.
+- Cloud Firestore for assets, snapshots, and settings.
+- Firestore offline persistence for browser-side cache.
 - A chart library for mobile-friendly reports.
 - Vercel for hosting and deployment from GitHub.
 
@@ -68,7 +70,18 @@ wealth-tracker/
   docs/
 ```
 
-Storage will be isolated behind a small database module so future cloud backup can be added without rewriting feature UI.
+Firebase access will be isolated behind small auth and data modules so UI features do not call Firebase APIs directly.
+
+Firestore data will be scoped by authenticated user:
+
+```text
+users/{userId}
+  settings/main
+  assets/{assetId}
+  snapshots/{snapshotId}
+```
+
+Firebase config values will come from Vercel environment variables. They should not be hardcoded as private secrets, although Firebase web config is not treated as a server secret. Security depends on Firebase Auth and Firestore security rules.
 
 ## Core Screens
 
@@ -248,6 +261,16 @@ The app should prevent invalid data entry:
 - Confirmation before destructive actions.
 - Import validation before replacing or merging local data.
 - Clear empty states for no assets, no snapshots, and no report data.
+- Authentication-required state for signed-out users.
+- User-scoped Firestore reads and writes only.
+
+Firestore rules should allow each signed-in user to access only their own document tree:
+
+```text
+users/{userId}/...
+```
+
+where `request.auth.uid == userId`.
 
 ## Testing And Verification
 
@@ -256,6 +279,8 @@ Implementation should verify:
 - Asset value calculations.
 - Unrealized P/L calculations.
 - Snapshot creation and update behavior.
+- Google sign-in and sign-out flow.
+- User-scoped Firestore read/write behavior.
 - JSON export/import round trip.
 - PWA installability basics.
 - Offline reload after first visit.
@@ -266,8 +291,6 @@ Implementation should verify:
 
 The design leaves room for:
 
-- Optional cloud backup.
-- Login and sync.
 - CSV export.
 - Transaction ledger.
 - Multi-currency support.
