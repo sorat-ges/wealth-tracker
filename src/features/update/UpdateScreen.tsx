@@ -23,6 +23,11 @@ export function UpdateScreen({
   onSaveSnapshot
 }: UpdateScreenProps) {
   const summary = calculateSnapshotSummary(assets, liabilities);
+  const assetNameCounts = assets.reduce<Record<string, number>>((counts, asset) => {
+    const key = `${asset.type}:${normalizeName(asset.name)}`;
+    counts[key] = (counts[key] ?? 0) + 1;
+    return counts;
+  }, {});
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,6 +88,7 @@ export function UpdateScreen({
         {assets.map((asset) => (
           <label key={asset.id}>
             {asset.name}
+            {assetNameCounts[`${asset.type}:${normalizeName(asset.name)}`] > 1 ? " (ซ้ำ)" : ""}
             <input
               name={`asset-${asset.id}`}
               inputMode="decimal"
@@ -118,4 +124,8 @@ export function UpdateScreen({
       </form>
     </section>
   );
+}
+
+function normalizeName(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLocaleLowerCase("th-TH");
 }

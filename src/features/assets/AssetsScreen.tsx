@@ -59,23 +59,25 @@ export function AssetsScreen({
     const form = new FormData(formElement);
     const type = form.get("type") as AssetType;
     const now = new Date().toISOString();
+    const name = String(form.get("name") ?? "สินทรัพย์").trim();
+    const existingAsset = assets.find((assetItem) => assetItem.type === type && normalizeName(assetItem.name) === normalizeName(name));
     const asset: Asset = {
-      id: crypto.randomUUID(),
-      name: String(form.get("name") ?? "สินทรัพย์").trim(),
+      id: existingAsset?.id ?? crypto.randomUUID(),
+      name,
       type,
       quantity: marketAssetTypes.has(type) ? toNumber(form.get("quantity")) : undefined,
       averageCost: marketAssetTypes.has(type) ? toNumber(form.get("averageCost")) : undefined,
       currentPrice: marketAssetTypes.has(type) ? toNumber(form.get("currentPrice")) : undefined,
       currentValue: marketAssetTypes.has(type) ? undefined : toNumber(form.get("currentValue")),
       active: true,
-      createdAt: now,
+      createdAt: existingAsset?.createdAt ?? now,
       updatedAt: now
     };
     try {
       await onSaveAsset(asset);
       formElement.reset();
       setSelectedAssetType("cash");
-      setMessage("บันทึกสินทรัพย์แล้ว");
+      setMessage(existingAsset ? "อัปเดตสินทรัพย์เดิมแล้ว" : "บันทึกสินทรัพย์แล้ว");
     } catch (saveError) {
       setError(getSaveErrorMessage(saveError));
     } finally {
@@ -91,19 +93,24 @@ export function AssetsScreen({
     setMessage(null);
     const form = new FormData(formElement);
     const now = new Date().toISOString();
+    const type = form.get("type") as LiabilityType;
+    const name = String(form.get("name") ?? "หนี้สิน").trim();
+    const existingLiability = liabilities.find(
+      (liabilityItem) => liabilityItem.type === type && normalizeName(liabilityItem.name) === normalizeName(name),
+    );
     const liability: Liability = {
-      id: crypto.randomUUID(),
-      name: String(form.get("name") ?? "หนี้สิน").trim(),
-      type: form.get("type") as LiabilityType,
+      id: existingLiability?.id ?? crypto.randomUUID(),
+      name,
+      type,
       currentBalance: toNumber(form.get("currentBalance")),
       active: true,
-      createdAt: now,
+      createdAt: existingLiability?.createdAt ?? now,
       updatedAt: now
     };
     try {
       await onSaveLiability(liability);
       formElement.reset();
-      setMessage("บันทึกหนี้สินแล้ว");
+      setMessage(existingLiability ? "อัปเดตหนี้สินเดิมแล้ว" : "บันทึกหนี้สินแล้ว");
     } catch (saveError) {
       setError(getSaveErrorMessage(saveError));
     } finally {
@@ -256,4 +263,8 @@ function getSaveErrorMessage(error: unknown) {
   }
 
   return "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อและ Firestore Rules";
+}
+
+function normalizeName(name: string) {
+  return name.trim().replace(/\s+/g, " ").toLocaleLowerCase("th-TH");
 }
