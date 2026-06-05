@@ -47,6 +47,8 @@ export function AssetsScreen({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [selectedAssetType, setSelectedAssetType] = useState<AssetType>("cash");
+  const selectedAssetIsMarket = marketAssetTypes.has(selectedAssetType);
 
   async function handleAssetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,6 +73,7 @@ export function AssetsScreen({
     try {
       await onSaveAsset(asset);
       event.currentTarget.reset();
+      setSelectedAssetType("cash");
       setMessage("บันทึกสินทรัพย์แล้ว");
     } catch (saveError) {
       setError(getSaveErrorMessage(saveError));
@@ -129,7 +132,7 @@ export function AssetsScreen({
           </label>
           <label>
             ประเภท
-            <select name="type" defaultValue="cash">
+            <select name="type" value={selectedAssetType} onChange={(event) => setSelectedAssetType(event.currentTarget.value as AssetType)}>
               {assetTypes.map((type) => (
                 <option key={type.value} value={type.value}>
                   {type.label}
@@ -137,22 +140,27 @@ export function AssetsScreen({
               ))}
             </select>
           </label>
-          <label>
-            จำนวนหน่วย
-            <input name="quantity" inputMode="decimal" type="number" min="0" step="any" placeholder="สำหรับหุ้น กองทุน คริปโต ทอง" />
-          </label>
-          <label>
-            ต้นทุนเฉลี่ย
-            <input name="averageCost" inputMode="decimal" type="number" min="0" step="any" placeholder="กรอกต้นทุนเอง" />
-          </label>
-          <label>
-            ราคาปัจจุบัน
-            <input name="currentPrice" inputMode="decimal" type="number" min="0" step="any" placeholder="กรอกราคาเอง" />
-          </label>
-          <label>
-            มูลค่าปัจจุบัน
-            <input name="currentValue" inputMode="decimal" type="number" min="0" step="any" placeholder="เงินสดหรือมูลค่าอื่น" />
-          </label>
+          {selectedAssetIsMarket ? (
+            <>
+              <label>
+                จำนวนหน่วย
+                <input name="quantity" inputMode="decimal" type="number" min="0" step="any" required placeholder="เช่น 10" />
+              </label>
+              <label>
+                ต้นทุนเฉลี่ย
+                <input name="averageCost" inputMode="decimal" type="number" min="0" step="any" required placeholder="กรอกต้นทุนเอง" />
+              </label>
+              <label>
+                ราคาปัจจุบัน
+                <input name="currentPrice" inputMode="decimal" type="number" min="0" step="any" required placeholder="กรอกราคาเอง" />
+              </label>
+            </>
+          ) : (
+            <label>
+              มูลค่าปัจจุบัน
+              <input name="currentValue" inputMode="decimal" type="number" min="0" step="any" required placeholder="เช่น 50000" />
+            </label>
+          )}
           <button className="primary-button" type="submit" disabled={saving}>
             {saving ? "กำลังบันทึก..." : "บันทึกสินทรัพย์"}
           </button>
