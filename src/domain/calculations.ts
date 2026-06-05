@@ -7,16 +7,24 @@ function roundMoney(value: number) {
 }
 
 function getCurrentValue(asset: Asset) {
+  if (asset.currentValue !== undefined) {
+    return roundMoney(asset.currentValue);
+  }
+
   if (marketTypes.has(asset.type)) {
     return roundMoney((asset.quantity ?? 0) * (asset.currentPrice ?? 0));
   }
 
-  return roundMoney(asset.currentValue ?? 0);
+  return 0;
 }
 
 function getCostBasis(asset: Asset) {
   if (!marketTypes.has(asset.type)) {
     return undefined;
+  }
+
+  if (asset.costBasis !== undefined) {
+    return roundMoney(asset.costBasis);
   }
 
   return roundMoney((asset.quantity ?? 0) * (asset.averageCost ?? 0));

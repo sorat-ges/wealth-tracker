@@ -29,6 +29,29 @@ describe("wealth calculations", () => {
     });
   });
 
+  it("calculates market asset value from total cost and current value when units are not available", () => {
+    const asset: Asset = {
+      id: "gold-1",
+      name: "Gold DCA",
+      type: "gold",
+      costBasis: 125000,
+      currentValue: 142000,
+      active: true,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+
+    expect(calculateAssetSnapshotItem(asset)).toEqual({
+      assetId: "gold-1",
+      value: 142000,
+      costBasis: 125000,
+      unrealizedPL: 17000,
+      unrealizedPLPercent: 13.6,
+      quantity: undefined,
+      price: undefined
+    });
+  });
+
   it("subtracts car loan debt from investable wealth without counting the car as an asset", () => {
     const assets: Asset[] = [
       {

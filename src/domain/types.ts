@@ -7,6 +7,7 @@ export type Asset = {
   type: AssetType;
   quantity?: number;
   averageCost?: number;
+  costBasis?: number;
   currentPrice?: number;
   currentValue?: number;
   active: boolean;

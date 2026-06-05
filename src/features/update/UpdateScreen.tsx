@@ -12,8 +12,6 @@ type UpdateScreenProps = {
   onSaveSnapshot: (snapshot: Snapshot) => Promise<void>;
 };
 
-const marketAssetTypes = new Set<Asset["type"]>(["stock", "fund", "crypto", "gold"]);
-
 export function UpdateScreen({
   assets,
   liabilities,
@@ -39,8 +37,7 @@ export function UpdateScreen({
       const value = toNumber(form.get(`asset-${asset.id}`));
       return {
         ...asset,
-        currentPrice: marketAssetTypes.has(asset.type) ? value : asset.currentPrice,
-        currentValue: marketAssetTypes.has(asset.type) ? asset.currentValue : value,
+        currentValue: value,
         updatedAt: now
       };
     });
@@ -95,9 +92,9 @@ export function UpdateScreen({
               type="number"
               min="0"
               step="any"
-              defaultValue={marketAssetTypes.has(asset.type) ? asset.currentPrice ?? 0 : asset.currentValue ?? 0}
+              defaultValue={getAssetValue(asset)}
             />
-            <small>{marketAssetTypes.has(asset.type) ? "ราคาปัจจุบันที่กรอกเอง" : "มูลค่าปัจจุบันที่กรอกเอง"}</small>
+            <small>มูลค่าปัจจุบันรวมที่กรอกเอง</small>
           </label>
         ))}
         {!assets.length ? <p className="empty-text">เพิ่มสินทรัพย์ก่อนบันทึกสแนปช็อต</p> : null}
@@ -128,4 +125,8 @@ export function UpdateScreen({
 
 function normalizeName(name: string) {
   return name.trim().replace(/\s+/g, " ").toLocaleLowerCase("th-TH");
+}
+
+function getAssetValue(asset: Asset) {
+  return asset.currentValue ?? (asset.quantity ?? 0) * (asset.currentPrice ?? 0);
 }

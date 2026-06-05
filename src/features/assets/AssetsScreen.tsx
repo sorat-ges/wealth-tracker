@@ -65,10 +65,11 @@ export function AssetsScreen({
       id: existingAsset?.id ?? crypto.randomUUID(),
       name,
       type,
-      quantity: marketAssetTypes.has(type) ? toNumber(form.get("quantity")) : undefined,
-      averageCost: marketAssetTypes.has(type) ? toNumber(form.get("averageCost")) : undefined,
-      currentPrice: marketAssetTypes.has(type) ? toNumber(form.get("currentPrice")) : undefined,
-      currentValue: marketAssetTypes.has(type) ? undefined : toNumber(form.get("currentValue")),
+      quantity: undefined,
+      averageCost: undefined,
+      costBasis: marketAssetTypes.has(type) ? toNumber(form.get("costBasis")) : undefined,
+      currentPrice: undefined,
+      currentValue: toNumber(form.get("currentValue")),
       active: true,
       createdAt: existingAsset?.createdAt ?? now,
       updatedAt: now
@@ -152,16 +153,12 @@ export function AssetsScreen({
           {selectedAssetIsMarket ? (
             <>
               <label>
-                จำนวนหน่วย
-                <input name="quantity" inputMode="decimal" type="number" min="0" step="any" required placeholder="เช่น 10" />
+                เงินลงทุนรวม
+                <input name="costBasis" inputMode="decimal" type="number" min="0" step="any" required placeholder="เช่น 125000" />
               </label>
               <label>
-                ต้นทุนเฉลี่ย
-                <input name="averageCost" inputMode="decimal" type="number" min="0" step="any" required placeholder="กรอกต้นทุนเอง" />
-              </label>
-              <label>
-                ราคาปัจจุบัน
-                <input name="currentPrice" inputMode="decimal" type="number" min="0" step="any" required placeholder="กรอกราคาเอง" />
+                มูลค่าปัจจุบันรวม
+                <input name="currentValue" inputMode="decimal" type="number" min="0" step="any" required placeholder="เช่น 142000" />
               </label>
             </>
           ) : (
@@ -219,7 +216,7 @@ export function AssetsScreen({
                 <span>{assetTypeLabels[asset.type]}</span>
               </div>
               <div className="row-actions">
-                <span>{formatCurrency(asset.currentValue ?? (asset.quantity ?? 0) * (asset.currentPrice ?? 0), settings.mainCurrency)}</span>
+                <span>{formatCurrency(getAssetValue(asset), settings.mainCurrency)}</span>
                 <button className="icon-button danger-button" type="button" onClick={() => onDeleteAsset(asset.id)} aria-label={`ลบ ${asset.name}`}>
                   <Trash2 size={16} />
                 </button>
@@ -272,4 +269,8 @@ function getSaveErrorMessage(error: unknown) {
 
 function normalizeName(name: string) {
   return name.trim().replace(/\s+/g, " ").toLocaleLowerCase("th-TH");
+}
+
+function getAssetValue(asset: Asset) {
+  return asset.currentValue ?? (asset.quantity ?? 0) * (asset.currentPrice ?? 0);
 }
