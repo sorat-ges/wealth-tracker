@@ -1,0 +1,479 @@
+# Wealth Tracker Project Status
+
+Last updated: 2026-06-05
+
+This document is a handoff note for the next AI agent session. It summarizes the current product, architecture, data model, deployment setup, and implementation decisions.
+
+## Product Goal
+
+Wealth Tracker is a mobile-first Progressive Web App for manually tracking personal investable wealth.
+
+The app intentionally does not connect to broker, bank, stock, index, or crypto APIs. The user manually enters all asset values, debt balances, and daily snapshots.
+
+Primary metric:
+
+```text
+Investable Wealth = total investable assets - total liabilities
+```
+
+Important product rule:
+
+- Count investable assets such as cash, funds, stocks, crypto, gold, and other investments.
+- Do not count personal-use car value as wealth.
+- Do count car loans and other debts as liabilities.
+- Historical snapshots are records of the past and should not be changed automatically when current assets are edited.
+
+## Current Tech Stack
+
+- React 18
+- TypeScript
+- Vite
+- Firebase Auth with Google login
+- Cloud Firestore
+- Vite PWA plugin
+- Recharts
+- Lucide React icons
+- Vitest
+- Plain global CSS in `src/styles/global.css`
+
+Main commands:
+
+```bash
+npm run dev
+npm test -- --run
+npm run build
+```
+
+## Deployment
+
+GitHub repository:
+
+```text
+https://github.com/sorat-ges/wealth-tracker.git
+```
+
+Vercel URL:
+
+```text
+https://wealth-tracker-fawn.vercel.app/
+```
+
+Vercel project settings:
+
+- Framework preset: Vite
+- Root directory: `./`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Install command: default or `npm install`
+
+Required Vercel environment variables:
+
+```env
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_MEASUREMENT_ID=
+```
+
+The current local `.env.local` has the Firebase values. Do not hardcode Firebase config into source files.
+
+Firebase Auth setup:
+
+- Google provider enabled.
+- Add the Vercel domain to Firebase Auth authorized domains:
+
+```text
+wealth-tracker-fawn.vercel.app
+```
+
+## Firestore Structure
+
+All user data is scoped below the authenticated Firebase user id:
+
+```text
+users/{uid}
+users/{uid}/settings/main
+users/{uid}/assets/{assetId}
+users/{uid}/liabilities/{liabilityId}
+users/{uid}/snapshots/{snapshotId}
+```
+
+Repository functions live in:
+
+```text
+src/data/wealthRepository.ts
+```
+
+Important repository behavior:
+
+- `saveAsset`, `saveLiability`, `saveSnapshot`, and `saveSettings` use `setDoc(..., { merge: true })`.
+- `removeUndefinedFields()` recursively removes `undefined` before Firestore writes because Firestore rejects `undefined`.
+- `subscribeSnapshots()` orders snapshots by `date` ascending.
+
+Expected Firestore rule direction:
+
+```text
+Users can only read/write their own users/{uid}/... documents.
+```
+
+## Data Model
+
+Types are in:
+
+```text
+src/domain/types.ts
+```
+
+Asset types:
+
+```ts
+type AssetType = "cash" | "stock" | "fund" | "crypto" | "gold" | "other";
+```
+
+Liability types:
+
+```ts
+type LiabilityType = "carLoan" | "homeLoan" | "personalLoan" | "creditCard" | "otherDebt";
+```
+
+Current `Asset` supports both old unit-based fields and the newer total-value workflow:
+
+```ts
+type Asset = {
+  id: string;
+  name: string;
+  type: AssetType;
+  quantity?: number;
+  averageCost?: number;
+  costBasis?: number;
+  currentPrice?: number;
+  currentValue?: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
+Current preferred workflow for market assets is total input:
+
+```text
+costBasis = total money invested
+currentValue = total current value
+```
+
+Example for gold DCA:
+
+```text
+name: Gold DCA
+type: gold
+costBasis: 14000
+currentValue: 15100
+```
+
+Old unit-based data is still supported by fallback logic:
+
+```text
+value = quantity * currentPrice
+costBasis = quantity * averageCost
+```
+
+## Domain Helpers
+
+`src/domain/calculations.ts`
+
+- Calculates snapshot summary.
+- Calculates unrealized P/L.
+- Uses `currentValue` and `costBasis` first.
+- Falls back to unit-based fields when needed.
+
+`src/domain/assets.ts`
+
+- `getAssetValue(asset)`: current value with fallback.
+- `getAssetCostBasis(asset)`: cost basis with fallback.
+- `groupAssetsByType(assets)`: active assets grouped by type and sorted by current value descending inside each group.
+- `createUpdatedAsset(asset, values, now)`: updates current asset while preserving `id` and `createdAt`.
+
+`src/domain/allocation.ts`
+
+- Sorts allocation rows by value descending.
+
+`src/domain/snapshots.ts`
+
+- `updateSnapshotTotals()` edits snapshot totals without touching captured asset/liability rows.
+
+## App Structure
+
+Root app:
+
+```text
+src/app/App.tsx
+```
+
+Auth:
+
+```text
+src/features/auth/AuthGate.tsx
+src/firebase/auth.ts
+src/firebase/config.ts
+src/firebase/firestore.ts
+```
+
+Main tabs:
+
+```text
+dashboard -> src/features/dashboard/Dashboard.tsx
+assets    -> src/features/assets/AssetsScreen.tsx
+update    -> src/features/update/UpdateScreen.tsx
+reports   -> src/features/reports/ReportsScreen.tsx
+settings  -> src/features/settings/SettingsScreen.tsx
+```
+
+Tab definitions:
+
+```text
+src/app/navigation.ts
+```
+
+Shared controlled money input:
+
+```text
+src/components/MoneyInput.tsx
+```
+
+`MoneyInput` behavior:
+
+- On focus: shows raw editable number, for example `27828.58`.
+- On blur: formats with commas and removes unnecessary `.00`, for example `27,828.58` or `292,509`.
+- `toNumber()` parses formatted comma values before saving.
+
+## Current Feature Set
+
+### Authentication
+
+- Google login through Firebase Auth.
+- Signed-in user sees Thai UI.
+
+### Dashboard
+
+File:
+
+```text
+src/features/dashboard/Dashboard.tsx
+```
+
+Shows:
+
+- Investable wealth hero.
+- Total investable assets.
+- Total liabilities.
+- Total unrealized P/L and percent.
+- Asset allocation donut and list.
+- Recent snapshots.
+
+Recent fixes:
+
+- Allocation list is sorted by value descending.
+- Allocation percentages use ratio formatting correctly, e.g. `0.10` becomes `10.00%`, not `0.10%`.
+
+### Assets Screen
+
+File:
+
+```text
+src/features/assets/AssetsScreen.tsx
+```
+
+Supports:
+
+- Add assets.
+- Add liabilities.
+- Assets grouped into panels by type.
+- Assets sorted by current value descending inside each group.
+- Edit asset from list using pencil icon.
+- Delete asset using trash icon.
+- Edit asset master only. Existing snapshots are not modified.
+
+Current asset input behavior:
+
+- For `stock`, `fund`, `crypto`, and `gold`: enter `เงินลงทุนรวม` and `มูลค่าปัจจุบันรวม`.
+- For `cash` and `other`: enter `มูลค่าปัจจุบัน`.
+- If adding an asset with the same normalized name and same type, it updates the existing asset instead of creating a duplicate.
+
+### Update Screen
+
+File:
+
+```text
+src/features/update/UpdateScreen.tsx
+```
+
+Supports:
+
+- Select snapshot date.
+- Enter current total value for each asset.
+- Enter current balance for each liability.
+- Save daily snapshot.
+- Saving a snapshot also updates current asset/liability master values.
+
+Important:
+
+- Date input CSS was fixed to avoid overflow on mobile.
+
+### Reports Screen
+
+File:
+
+```text
+src/features/reports/ReportsScreen.tsx
+```
+
+Shows:
+
+- Investable wealth trend area chart.
+- Unrealized P/L as a mobile-friendly ranking list instead of a bar chart.
+- Snapshot history list.
+
+Supports:
+
+- Edit snapshot totals.
+- Delete snapshots.
+
+Snapshot edit behavior:
+
+- Edits only the snapshot document.
+- Does not modify current asset/liability master records.
+- Does not modify other snapshots.
+
+### Settings Screen
+
+File:
+
+```text
+src/features/settings/SettingsScreen.tsx
+```
+
+Supports:
+
+- Main currency setting.
+- JSON backup export/import.
+- Sign out.
+
+## PWA Status
+
+PWA config:
+
+```text
+vite.config.ts
+public/manifest.webmanifest
+```
+
+Current icon set:
+
+```text
+public/icons/icon.svg
+public/icons/icon-192.png
+public/icons/icon-512.png
+public/icons/apple-touch-icon.png
+```
+
+Chosen icon direction:
+
+```text
+Pulse / Wealth
+```
+
+If the installed icon does not refresh on mobile, uninstall the PWA and install it again after Vercel redeploys.
+
+## Styling Notes
+
+Global CSS:
+
+```text
+src/styles/global.css
+```
+
+Current visual direction:
+
+- Mobile-first.
+- Max app shell width around iPhone scale.
+- Emerald/gold finance palette.
+- Cards use 8px radius.
+- Bottom tab navigation uses emerald selected state.
+- Buttons use emerald primary, green-tinted secondary/icon, and red-tinted danger.
+- Native select controls are styled in closed state with custom chevron. Open picker UI is native OS and cannot be fully controlled with CSS.
+
+Important recent CSS fixes:
+
+- Date inputs no longer overflow panel on mobile.
+- Dropdown controls were restyled.
+- `box-sizing` includes pseudo-elements.
+- Inputs/selects use `min-width: 0` and `max-width: 100%`.
+
+## Current Git Status
+
+Last known pushed state:
+
+```text
+origin/main is pushed through e2125f5 style: refine dropdown controls
+```
+
+Recent important commits:
+
+```text
+2304366 fix: contain mobile date inputs
+e2125f5 style: refine dropdown controls
+4675d6c style: add polished pwa icons
+fbff0ca feat: edit assets from asset list
+46aa6e7 feat: group assets by type
+```
+
+Always run:
+
+```bash
+git status --short
+git log --oneline -5
+```
+
+before starting the next task.
+
+## Verification Baseline
+
+Before claiming work is complete, run:
+
+```bash
+npm test -- --run
+npm run build
+```
+
+Current baseline at last documentation update:
+
+```text
+7 test files passed
+15 tests passed
+production build passed
+```
+
+Vite still warns that some chunks are larger than 500 kB. This is currently known and not blocking.
+
+## Known Constraints and Decisions
+
+- Do not add third-party financial API integrations in v1.
+- Do not treat personal-use car value as investable wealth.
+- Do keep car loan debt as liability.
+- Do not mutate historical snapshots when editing current assets.
+- Keep Thai UI copy unless user asks otherwise.
+- Prefer existing patterns and global CSS over adding a new UI library.
+- Use Firestore user-scoped paths only.
+- For Vercel, all Firebase env vars must use `VITE_` prefix.
+
+## Good Next Feature Candidates
+
+- Edit liabilities from the liability list, mirroring asset edit behavior.
+- Add confirm dialogs for asset/liability deletes.
+- Add total per asset group in Assets screen headers.
+- Add better mobile visual QA with Browser/Playwright if available.
+- Add Vercel deployment status instructions or GitHub Actions checks.
+- Split vendor chunks if bundle warning becomes a priority.
