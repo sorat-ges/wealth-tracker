@@ -1,5 +1,6 @@
 import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
+import { useState } from "react";
 import type { Asset, AssetType, Liability, LiabilityType, Settings } from "../../domain/types";
 import { formatCurrency, toNumber } from "../../utils/format";
 
@@ -43,8 +44,15 @@ export function AssetsScreen({
   onSaveLiability,
   onDeleteLiability
 }: AssetsScreenProps) {
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
   async function handleAssetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSaving(true);
+    setError(null);
+    setMessage(null);
     const form = new FormData(event.currentTarget);
     const type = form.get("type") as AssetType;
     const now = new Date().toISOString();
@@ -60,12 +68,22 @@ export function AssetsScreen({
       createdAt: now,
       updatedAt: now
     };
-    await onSaveAsset(asset);
-    event.currentTarget.reset();
+    try {
+      await onSaveAsset(asset);
+      event.currentTarget.reset();
+      setMessage("บันทึกสินทรัพย์แล้ว");
+    } catch (saveError) {
+      setError(getSaveErrorMessage(saveError));
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleLiabilitySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSaving(true);
+    setError(null);
+    setMessage(null);
     const form = new FormData(event.currentTarget);
     const now = new Date().toISOString();
     const liability: Liability = {
@@ -77,8 +95,15 @@ export function AssetsScreen({
       createdAt: now,
       updatedAt: now
     };
-    await onSaveLiability(liability);
-    event.currentTarget.reset();
+    try {
+      await onSaveLiability(liability);
+      event.currentTarget.reset();
+      setMessage("บันทึกหนี้สินแล้ว");
+    } catch (saveError) {
+      setError(getSaveErrorMessage(saveError));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -88,6 +113,9 @@ export function AssetsScreen({
         <h1>สินทรัพย์และหนี้สิน</h1>
         <p>นับเฉพาะสินทรัพย์ลงทุน ไม่นับมูลค่ารถส่วนตัว แต่ยังนับหนี้รถยนต์เป็นหนี้สิน</p>
       </div>
+
+      {message ? <p className="success-text">{message}</p> : null}
+      {error ? <p className="error-text">{error}</p> : null}
 
       <article className="panel">
         <div className="section-heading">
@@ -125,8 +153,8 @@ export function AssetsScreen({
             มูลค่าปัจจุบัน
             <input name="currentValue" inputMode="decimal" type="number" min="0" step="any" placeholder="เงินสดหรือมูลค่าอื่น" />
           </label>
-          <button className="primary-button" type="submit">
-            บันทึกสินทรัพย์
+          <button className="primary-button" type="submit" disabled={saving}>
+            {saving ? "กำลังบันทึก..." : "บันทึกสินทรัพย์"}
           </button>
         </form>
       </article>
@@ -155,8 +183,8 @@ export function AssetsScreen({
             ยอดคงเหลือปัจจุบัน
             <input name="currentBalance" inputMode="decimal" type="number" min="0" step="any" required />
           </label>
-          <button className="primary-button" type="submit">
-            บันทึกหนี้สิน
+          <button className="primary-button" type="submit" disabled={saving}>
+            {saving ? "กำลังบันทึก..." : "บันทึกหนี้สิน"}
           </button>
         </form>
       </article>
@@ -210,4 +238,12 @@ export function AssetsScreen({
       </article>
     </section>
   );
+}
+
+function getSaveErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return `บันทึกไม่สำเร็จ: ${error.message}`;
+  }
+
+  return "บันทึกไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อและ Firestore Rules";
 }

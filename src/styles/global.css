@@ -334,6 +334,11 @@ select:focus {
   font-weight: 800;
 }
 
+.success-text {
+  color: #17633a;
+  font-weight: 800;
+}
+
 .bottom-tabs {
   position: fixed;
   right: 0;
