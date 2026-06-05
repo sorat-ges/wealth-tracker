@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { MoneyInput } from "../../components/MoneyInput";
 import type { Asset, AssetType, Liability, LiabilityType, Settings } from "../../domain/types";
 import { formatCurrency, toNumber } from "../../utils/format";
 
@@ -154,17 +155,17 @@ export function AssetsScreen({
             <>
               <label>
                 เงินลงทุนรวม
-                <input name="costBasis" inputMode="decimal" type="number" min="0" step="any" required placeholder="เช่น 125000" />
+                <MoneyInput name="costBasis" min={0} required placeholder="เช่น 125000" />
               </label>
               <label>
                 มูลค่าปัจจุบันรวม
-                <input name="currentValue" inputMode="decimal" type="number" min="0" step="any" required placeholder="เช่น 142000" />
+                <MoneyInput name="currentValue" min={0} required placeholder="เช่น 142000" />
               </label>
             </>
           ) : (
             <label>
               มูลค่าปัจจุบัน
-              <input name="currentValue" inputMode="decimal" type="number" min="0" step="any" required placeholder="เช่น 50000" />
+              <MoneyInput name="currentValue" min={0} required placeholder="เช่น 50000" />
             </label>
           )}
           <button className="primary-button" type="submit" disabled={saving}>
@@ -195,7 +196,7 @@ export function AssetsScreen({
           </label>
           <label>
             ยอดคงเหลือปัจจุบัน
-            <input name="currentBalance" inputMode="decimal" type="number" min="0" step="any" required />
+            <MoneyInput name="currentBalance" min={0} required />
           </label>
           <button className="primary-button" type="submit" disabled={saving}>
             {saving ? "กำลังบันทึก..." : "บันทึกหนี้สิน"}

@@ -2,6 +2,7 @@ import { Pencil, Trash2, X } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { MoneyInput } from "../../components/MoneyInput";
 import { updateSnapshotTotals } from "../../domain/snapshots";
 import type { Asset, Settings, Snapshot } from "../../domain/types";
 import { formatCurrency, formatDateLabel, toNumber } from "../../utils/format";
@@ -209,35 +210,26 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
             </label>
             <label>
               สินทรัพย์ลงทุนรวม
-              <input
+              <MoneyInput
                 name="totalInvestableAssets"
-                inputMode="decimal"
-                type="number"
-                min="0"
-                step="any"
+                min={0}
                 defaultValue={editingSnapshot.totalInvestableAssets}
                 required
               />
             </label>
             <label>
               หนี้สินรวม
-              <input
+              <MoneyInput
                 name="totalLiabilities"
-                inputMode="decimal"
-                type="number"
-                min="0"
-                step="any"
+                min={0}
                 defaultValue={editingSnapshot.totalLiabilities}
                 required
               />
             </label>
             <label>
               กำไร/ขาดทุนยังไม่รับรู้
-              <input
+              <MoneyInput
                 name="totalUnrealizedPL"
-                inputMode="decimal"
-                type="number"
-                step="any"
                 defaultValue={editingSnapshot.totalUnrealizedPL}
                 required
               />

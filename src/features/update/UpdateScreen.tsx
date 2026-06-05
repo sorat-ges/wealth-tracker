@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { MoneyInput } from "../../components/MoneyInput";
 import { calculateSnapshotSummary } from "../../domain/calculations";
 import type { Asset, Liability, Settings, Snapshot } from "../../domain/types";
 import { formatCurrency, toNumber, todayId } from "../../utils/format";
@@ -86,12 +87,9 @@ export function UpdateScreen({
           <label key={asset.id}>
             {asset.name}
             {assetNameCounts[`${asset.type}:${normalizeName(asset.name)}`] > 1 ? " (ซ้ำ)" : ""}
-            <input
+            <MoneyInput
               name={`asset-${asset.id}`}
-              inputMode="decimal"
-              type="number"
-              min="0"
-              step="any"
+              min={0}
               defaultValue={getAssetValue(asset)}
             />
             <small>มูลค่าปัจจุบันรวมที่กรอกเอง</small>
@@ -103,12 +101,9 @@ export function UpdateScreen({
         {liabilities.map((liability) => (
           <label key={liability.id}>
             {liability.name}
-            <input
+            <MoneyInput
               name={`liability-${liability.id}`}
-              inputMode="decimal"
-              type="number"
-              min="0"
-              step="any"
+              min={0}
               defaultValue={liability.currentBalance}
             />
             <small>ยอดหนี้คงเหลือที่กรอกเอง</small>

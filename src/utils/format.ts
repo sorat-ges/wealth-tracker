@@ -21,7 +21,14 @@ export function todayId() {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function formatNumberInput(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 2
+  }).format(Number.isFinite(value) ? value : 0);
+}
+
 export function toNumber(value: FormDataEntryValue | null) {
-  const parsed = Number(value);
+  const normalized = typeof value === "string" ? value.replace(/,/g, "") : value;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 }
