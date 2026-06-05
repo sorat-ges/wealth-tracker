@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { sortAllocationByValue } from "../../domain/allocation";
 import { calculateSnapshotSummary } from "../../domain/calculations";
 import type { Asset, Liability, Settings, Snapshot } from "../../domain/types";
 import { formatCurrency, formatDateLabel, formatPercent, formatRatioPercent } from "../../utils/format";
@@ -19,14 +20,16 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
   const latest = snapshots.length >= 1 ? snapshots[snapshots.length - 1] : undefined;
   const comparisonBase = latest?.investableWealth ?? previous?.investableWealth ?? 0;
   const change = summary.investableWealth - comparisonBase;
-  const allocation = assets
-    .filter((asset) => asset.active)
-    .map((asset) => calculateSnapshotSummary([asset]).items[0])
-    .filter((item) => item.value > 0)
-    .map((item) => ({
-      name: assets.find((asset) => asset.id === item.assetId)?.name ?? "สินทรัพย์",
-      value: item.value
-    }));
+  const allocation = sortAllocationByValue(
+    assets
+      .filter((asset) => asset.active)
+      .map((asset) => calculateSnapshotSummary([asset]).items[0])
+      .filter((item) => item.value > 0)
+      .map((item) => ({
+        name: assets.find((asset) => asset.id === item.assetId)?.name ?? "สินทรัพย์",
+        value: item.value
+      })),
+  );
   const allocationTotal = allocation.reduce((total, item) => total + item.value, 0);
 
   return (
