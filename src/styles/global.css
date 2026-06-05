@@ -306,6 +306,58 @@ label small {
   border-radius: 999px;
 }
 
+.pl-list {
+  display: grid;
+  gap: 14px;
+}
+
+.pl-row {
+  display: grid;
+  gap: 8px;
+}
+
+.pl-row-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.pl-row-header strong {
+  overflow: hidden;
+  color: #303a32;
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pl-row-header span {
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.pl-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf2ec;
+}
+
+.pl-fill {
+  display: block;
+  height: 100%;
+  min-width: 8px;
+  border-radius: inherit;
+}
+
+.gain-fill {
+  background: linear-gradient(90deg, #1f7a4a, #43a86a);
+}
+
+.loss-fill {
+  background: linear-gradient(90deg, #d45a4f, #b42318);
+}
+
 .list-stack {
   display: grid;
   gap: 10px;

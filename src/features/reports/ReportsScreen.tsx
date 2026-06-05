@@ -1,7 +1,7 @@
 import { Pencil, Trash2, X } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { MoneyInput } from "../../components/MoneyInput";
 import { updateSnapshotTotals } from "../../domain/snapshots";
 import type { Asset, Settings, Snapshot } from "../../domain/types";
@@ -33,7 +33,9 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
         value: latestItem?.unrealizedPL ?? 0
       };
     })
-    .filter((item) => item.value !== 0);
+    .filter((item) => item.value !== 0)
+    .sort((left, right) => Math.abs(right.value) - Math.abs(left.value));
+  const maxPLValue = Math.max(...plRows.map((row) => Math.abs(row.value)), 0);
   const editingSnapshot = snapshots.find((snapshot) => snapshot.id === editingSnapshotId);
 
   async function handleSnapshotEdit(event: FormEvent<HTMLFormElement>) {
@@ -135,16 +137,25 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
           <span>{plRows.length} รายการ</span>
         </div>
         {plRows.length ? (
-          <div className="chart-box">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={plRows}>
-                <CartesianGrid vertical={false} stroke="#dde3dc" />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={11} />
-                <YAxis hide />
-                <Tooltip formatter={(value) => formatCurrency(Number(value), settings.mainCurrency)} />
-                <Bar dataKey="value" fill="#17633a" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="pl-list">
+            {plRows.map((row) => {
+              const width = maxPLValue ? Math.max(8, (Math.abs(row.value) / maxPLValue) * 100) : 0;
+              const isGain = row.value >= 0;
+              return (
+                <div className="pl-row" key={row.name}>
+                  <div className="pl-row-header">
+                    <strong>{row.name}</strong>
+                    <span className={isGain ? "gain" : "loss"}>{formatCurrency(row.value, settings.mainCurrency)}</span>
+                  </div>
+                  <div className="pl-track" aria-hidden="true">
+                    <span
+                      className={isGain ? "pl-fill gain-fill" : "pl-fill loss-fill"}
+                      style={{ width: `${width}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="empty-text">สินทรัพย์ตลาดที่มีต้นทุนจะแสดงกำไร/ขาดทุนที่ยังไม่รับรู้ที่นี่</p>
