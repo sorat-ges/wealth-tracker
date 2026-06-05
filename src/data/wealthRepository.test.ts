@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { getAssetPath, getLiabilityPath, getSettingsPath, getSnapshotPath, getUserPath } from "./wealthRepository";
+import {
+  getAssetPath,
+  getLiabilityPath,
+  getSettingsPath,
+  getSnapshotPath,
+  getUserPath,
+  removeUndefinedFields
+} from "./wealthRepository";
 
 describe("wealthRepository paths", () => {
   it("scopes all data below users/{uid}", () => {
@@ -8,5 +15,36 @@ describe("wealthRepository paths", () => {
     expect(getAssetPath("uid-1", "asset-1")).toBe("users/uid-1/assets/asset-1");
     expect(getLiabilityPath("uid-1", "car-loan")).toBe("users/uid-1/liabilities/car-loan");
     expect(getSnapshotPath("uid-1", "2026-06-05")).toBe("users/uid-1/snapshots/2026-06-05");
+  });
+});
+
+describe("removeUndefinedFields", () => {
+  it("removes undefined fields recursively before Firestore writes", () => {
+    expect(
+      removeUndefinedFields({
+        id: "cash",
+        quantity: undefined,
+        nested: {
+          keep: 1,
+          drop: undefined
+        },
+        items: [
+          {
+            value: 100,
+            price: undefined
+          }
+        ]
+      }),
+    ).toEqual({
+      id: "cash",
+      nested: {
+        keep: 1
+      },
+      items: [
+        {
+          value: 100
+        }
+      ]
+    });
   });
 });

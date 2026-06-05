@@ -38,7 +38,7 @@ export async function loadSettings(uid: string): Promise<Settings> {
 }
 
 export async function saveSettings(uid: string, settings: Settings) {
-  await setDoc(doc(db, getSettingsPath(uid)), settings, { merge: true });
+  await setDoc(doc(db, getSettingsPath(uid)), removeUndefinedFields(settings), { merge: true });
 }
 
 export function subscribeAssets(uid: string, callback: (assets: Asset[]) => void): Unsubscribe {
@@ -48,7 +48,7 @@ export function subscribeAssets(uid: string, callback: (assets: Asset[]) => void
 }
 
 export async function saveAsset(uid: string, asset: Asset) {
-  await setDoc(doc(db, getAssetPath(uid, asset.id)), asset, { merge: true });
+  await setDoc(doc(db, getAssetPath(uid, asset.id)), removeUndefinedFields(asset), { merge: true });
 }
 
 export async function deleteAsset(uid: string, assetId: string) {
@@ -62,7 +62,7 @@ export function subscribeLiabilities(uid: string, callback: (liabilities: Liabil
 }
 
 export async function saveLiability(uid: string, liability: Liability) {
-  await setDoc(doc(db, getLiabilityPath(uid, liability.id)), liability, { merge: true });
+  await setDoc(doc(db, getLiabilityPath(uid, liability.id)), removeUndefinedFields(liability), { merge: true });
 }
 
 export async function deleteLiability(uid: string, liabilityId: string) {
@@ -77,5 +77,21 @@ export function subscribeSnapshots(uid: string, callback: (snapshots: Snapshot[]
 }
 
 export async function saveSnapshot(uid: string, snapshot: Snapshot) {
-  await setDoc(doc(db, getSnapshotPath(uid, snapshot.id)), snapshot, { merge: true });
+  await setDoc(doc(db, getSnapshotPath(uid, snapshot.id)), removeUndefinedFields(snapshot), { merge: true });
+}
+
+export function removeUndefinedFields<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => removeUndefinedFields(item)) as T;
+  }
+
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, entryValue]) => entryValue !== undefined)
+      .map(([key, entryValue]) => [key, removeUndefinedFields(entryValue)]),
+  ) as T;
 }
