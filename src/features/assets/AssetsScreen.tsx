@@ -2,7 +2,14 @@ import { Pencil, Plus, Trash2, X } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { MoneyInput } from "../../components/MoneyInput";
-import { createUpdatedAsset, getAssetCostBasis, getAssetValue, groupAssetsByType } from "../../domain/assets";
+import {
+  createUpdatedAsset,
+  getAssetAnnualReturn,
+  getAssetAnnualReturnRate,
+  getAssetCostBasis,
+  getAssetValue,
+  groupAssetsByType
+} from "../../domain/assets";
 import type { Asset, AssetType, Liability, LiabilityType, Settings } from "../../domain/types";
 import { formatCurrency, toNumber } from "../../utils/format";
 
@@ -82,6 +89,7 @@ export function AssetsScreen({
       costBasis: marketAssetTypes.has(type) ? toNumber(form.get("costBasis")) : undefined,
       currentPrice: undefined,
       currentValue: toNumber(form.get("currentValue")),
+      annualReturnRate: type === "cash" ? toOptionalPositiveNumber(form.get("annualReturnRate")) : undefined,
       active: true,
       createdAt: existingAsset?.createdAt ?? now,
       updatedAt: now
@@ -148,7 +156,8 @@ export function AssetsScreen({
         name: String(form.get("name") ?? editingAsset.name).trim(),
         type,
         costBasis: marketAssetTypes.has(type) ? toNumber(form.get("costBasis")) : undefined,
-        currentValue: toNumber(form.get("currentValue"))
+        currentValue: toNumber(form.get("currentValue")),
+        annualReturnRate: type === "cash" ? toOptionalPositiveNumber(form.get("annualReturnRate")) : undefined
       },
       new Date().toISOString(),
     );
@@ -207,10 +216,18 @@ export function AssetsScreen({
               </label>
             </>
           ) : (
-            <label>
-              มูลค่าปัจจุบัน
-              <MoneyInput name="currentValue" min={0} required placeholder="เช่น 50000" />
-            </label>
+            <>
+              <label>
+                มูลค่าปัจจุบัน
+                <MoneyInput name="currentValue" min={0} required placeholder="เช่น 50000" />
+              </label>
+              {selectedAssetType === "cash" ? (
+                <label>
+                  ผลตอบแทนต่อปี (%)
+                  <MoneyInput name="annualReturnRate" min={0} placeholder="เช่น 1.5" />
+                </label>
+              ) : null}
+            </>
           )}
           <button className="primary-button" type="submit" disabled={saving}>
             {saving ? "กำลังบันทึก..." : "บันทึกสินทรัพย์"}
@@ -270,6 +287,12 @@ export function AssetsScreen({
                 <div>
                   <strong>{asset.name}</strong>
                   <span>{assetTypeLabels[asset.type]}</span>
+                  {getAssetAnnualReturn(asset) > 0 ? (
+                    <span>
+                      ผลตอบแทนรายปี {formatCurrency(getAssetAnnualReturn(asset), settings.mainCurrency)} (
+                      {getAssetAnnualReturnRate(asset)?.toLocaleString("th-TH")}%)
+                    </span>
+                  ) : null}
                 </div>
                 <div className="row-actions">
                   <span>{formatCurrency(getAssetValue(asset), settings.mainCurrency)}</span>
@@ -329,6 +352,12 @@ export function AssetsScreen({
                       มูลค่าปัจจุบันรวม
                       <MoneyInput name="currentValue" min={0} defaultValue={getAssetValue(asset)} required />
                     </label>
+                    {editingAssetType === "cash" ? (
+                      <label>
+                        ผลตอบแทนต่อปี (%)
+                        <MoneyInput name="annualReturnRate" min={0} defaultValue={getAssetAnnualReturnRate(asset)} placeholder="เช่น 1.5" />
+                      </label>
+                    ) : null}
                     <button className="primary-button" type="submit" disabled={saving}>
                       {saving ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
                     </button>
@@ -382,4 +411,9 @@ function getSaveErrorMessage(error: unknown) {
 
 function normalizeName(name: string) {
   return name.trim().replace(/\s+/g, " ").toLocaleLowerCase("th-TH");
+}
+
+function toOptionalPositiveNumber(value: FormDataEntryValue | null) {
+  const numberValue = toNumber(value);
+  return numberValue > 0 ? numberValue : undefined;
 }

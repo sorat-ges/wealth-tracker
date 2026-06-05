@@ -10,6 +10,7 @@ export type Asset = {
   costBasis?: number;
   currentPrice?: number;
   currentValue?: number;
+  annualReturnRate?: number;
   active: boolean;
   createdAt: string;
   updatedAt: string;

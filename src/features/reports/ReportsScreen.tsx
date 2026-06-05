@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { MoneyInput } from "../../components/MoneyInput";
+import { getDepositAnnualReturnRows, getTotalDepositAnnualReturn } from "../../domain/assets";
 import { updateSnapshotTotals } from "../../domain/snapshots";
 import type { Asset, Settings, Snapshot } from "../../domain/types";
 import { formatCurrency, formatDateLabel, toNumber } from "../../utils/format";
@@ -24,6 +25,8 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
     date: formatDateLabel(snapshot.date),
     value: snapshot.investableWealth
   }));
+  const depositReturnRows = getDepositAnnualReturnRows(assets);
+  const totalDepositAnnualReturn = getTotalDepositAnnualReturn(assets);
   const latestSnapshot = snapshots.length >= 1 ? snapshots[snapshots.length - 1] : undefined;
   const plRows = assets
     .map((asset) => {
@@ -128,6 +131,30 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
           </div>
         ) : (
           <p className="empty-text">บันทึกสแนปช็อตเพื่อดูแนวโน้ม</p>
+        )}
+      </article>
+
+      <article className="panel">
+        <div className="section-heading">
+          <h2>ผลตอบแทนเงินฝากรายปี</h2>
+          <span>{formatCurrency(totalDepositAnnualReturn, settings.mainCurrency)}</span>
+        </div>
+        {depositReturnRows.length ? (
+          <div className="list-stack">
+            {depositReturnRows.map((row) => (
+              <div className="list-row" key={row.assetId}>
+                <div>
+                  <strong>{row.name}</strong>
+                  <span>{row.annualReturnRate.toLocaleString("th-TH")}% ต่อปี</span>
+                </div>
+                <div className="row-actions">
+                  <span>{formatCurrency(row.annualReturn, settings.mainCurrency)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="empty-text">เงินฝากที่ใส่อัตราผลตอบแทนจะแสดงที่นี่</p>
         )}
       </article>
 

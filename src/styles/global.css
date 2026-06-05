@@ -213,10 +213,6 @@ p {
   padding: 13px;
 }
 
-.metric-card:nth-child(3) {
-  grid-column: 1 / -1;
-}
-
 .metric-card span,
 .section-heading span,
 .list-row span,

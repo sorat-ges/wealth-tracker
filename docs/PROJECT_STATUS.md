@@ -151,6 +151,7 @@ type Asset = {
   costBasis?: number;
   currentPrice?: number;
   currentValue?: number;
+  annualReturnRate?: number;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -180,6 +181,15 @@ value = quantity * currentPrice
 costBasis = quantity * averageCost
 ```
 
+Deposit-style cash assets can optionally store:
+
+```text
+annualReturnRate = expected yearly return percent
+annualReturn = currentValue * annualReturnRate / 100
+```
+
+This expected annual return is reported separately. It is not included in unrealized P/L.
+
 ## Domain Helpers
 
 `src/domain/calculations.ts`
@@ -193,6 +203,9 @@ costBasis = quantity * averageCost
 
 - `getAssetValue(asset)`: current value with fallback.
 - `getAssetCostBasis(asset)`: cost basis with fallback.
+- `getAssetAnnualReturn(asset)`: expected annual return for cash/deposit assets.
+- `getDepositAnnualReturnRows(assets)`: active cash assets with positive annual return, sorted by return descending.
+- `getTotalDepositAnnualReturn(assets)`: total expected annual return across active cash/deposit assets.
 - `groupAssetsByType(assets)`: active assets grouped by type and sorted by current value descending inside each group.
 - `createUpdatedAsset(asset, values, now)`: updates current asset while preserving `id` and `createdAt`.
 
@@ -269,6 +282,7 @@ Shows:
 - Investable wealth hero.
 - Total investable assets.
 - Total liabilities.
+- Total expected annual deposit return.
 - Total unrealized P/L and percent.
 - Asset allocation donut and list.
 - Recent snapshots.
@@ -299,7 +313,9 @@ Supports:
 Current asset input behavior:
 
 - For `stock`, `fund`, `crypto`, and `gold`: enter `เงินลงทุนรวม` and `มูลค่าปัจจุบันรวม`.
-- For `cash` and `other`: enter `มูลค่าปัจจุบัน`.
+- For `cash`: enter `มูลค่าปัจจุบัน` and optionally `ผลตอบแทนต่อปี (%)`.
+- For `other`: enter `มูลค่าปัจจุบัน`.
+- Cash rows with a positive annual return rate show expected yearly return.
 - If adding an asset with the same normalized name and same type, it updates the existing asset instead of creating a duplicate.
 
 ### Update Screen
@@ -333,6 +349,7 @@ src/features/reports/ReportsScreen.tsx
 Shows:
 
 - Investable wealth trend area chart.
+- Expected annual deposit return summary and per-deposit rows.
 - Unrealized P/L as a mobile-friendly ranking list instead of a bar chart.
 - Snapshot history list.
 

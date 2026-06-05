@@ -1,5 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { sortAllocationByValue } from "../../domain/allocation";
+import { getTotalDepositAnnualReturn } from "../../domain/assets";
 import { calculateSnapshotSummary } from "../../domain/calculations";
 import type { Asset, Liability, Settings, Snapshot } from "../../domain/types";
 import { formatCurrency, formatDateLabel, formatPercent, formatRatioPercent } from "../../utils/format";
@@ -16,6 +17,7 @@ const allocationColors = ["#17633a", "#7f6a2f", "#3867a6", "#8b3f62", "#58635d",
 
 export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }: DashboardProps) {
   const summary = calculateSnapshotSummary(assets, liabilities);
+  const totalDepositAnnualReturn = getTotalDepositAnnualReturn(assets);
   const previous = snapshots.length >= 2 ? snapshots[snapshots.length - 2] : undefined;
   const latest = snapshots.length >= 1 ? snapshots[snapshots.length - 1] : undefined;
   const comparisonBase = latest?.investableWealth ?? previous?.investableWealth ?? 0;
@@ -65,6 +67,10 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
           <small className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
             {formatPercent(summary.totalUnrealizedPLPercent)}
           </small>
+        </article>
+        <article className="metric-card">
+          <span>ผลตอบแทนเงินฝากรายปี</span>
+          <strong>{formatCurrency(totalDepositAnnualReturn, settings.mainCurrency)}</strong>
         </article>
       </div>
 
