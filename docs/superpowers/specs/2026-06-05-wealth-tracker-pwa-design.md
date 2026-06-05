@@ -13,6 +13,8 @@ The app will be designed first for iPhone 17 portrait use and will remain respon
 
 Version 1 is a Firebase-backed PWA deployed from GitHub to Vercel. It uses Google login, stores each user's data in Cloud Firestore, uses Firestore's offline cache for local resilience, and supports manual export/import backup.
 
+Firebase is used only for authentication, user-scoped database storage, and sync. Version 1 does not connect to any third-party asset, stock, index, crypto, broker, bank, or market-data API. All asset prices, index values, quantities, cost basis values, and current values are entered manually by the user.
+
 Included in v1:
 
 - One main currency for the whole app.
@@ -32,6 +34,8 @@ Excluded from v1:
 
 - Bank sync.
 - Broker sync.
+- Stock, index, crypto, or fund price APIs.
+- Market-data providers.
 - Multi-user support.
 - Tax reports.
 - Full transaction ledger.

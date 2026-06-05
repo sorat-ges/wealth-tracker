@@ -4,7 +4,7 @@
 
 **Goal:** Build a mobile-first React/Vite PWA for manual wealth tracking with Google login, Firestore persistence, unrealized P/L reporting, and Vercel deployment readiness.
 
-**Architecture:** The app is a client-side PWA hosted by Vercel. Firebase Auth provides Google sign-in, Firestore stores each user's data under `users/{uid}`, and feature modules consume typed repository functions instead of calling Firebase directly. The UI is optimized for iPhone portrait with responsive desktop expansion.
+**Architecture:** The app is a client-side PWA hosted by Vercel. Firebase Auth provides Google sign-in, Firestore stores each user's manually entered data under `users/{uid}`, and feature modules consume typed repository functions instead of calling Firebase directly. Phase 1 does not call third-party stock, index, crypto, fund, broker, bank, or market-data APIs; every asset price and value is entered by the user. The UI is optimized for iPhone portrait with responsive desktop expansion.
 
 **Tech Stack:** React, Vite, TypeScript, Firebase Web SDK, Firestore, CSS modules or plain CSS, Recharts, Vitest, Testing Library, vite-plugin-pwa.
 
@@ -1049,6 +1049,8 @@ export type WealthScreenProps = {
 
 Each screen must have real state and save behavior. Placeholder text is not acceptable after this task.
 
+The asset and update forms must not fetch current prices from external services. Market assets collect `quantity`, `averageCost`, and `currentPrice` from user input. Non-market assets collect `currentValue` from user input. Liabilities collect `currentValue` as the manual current balance.
+
 - [ ] **Step 3: Wire screens into App**
 
 Update `src/app/App.tsx` to render the selected feature component:
@@ -1279,6 +1281,8 @@ Verify:
 - Google sign-in button appears when signed out.
 - After sign-in, bottom tabs fit without overflow.
 - Assets can be added.
+- Stock, fund, crypto, index, and other market assets require manual current price entry.
+- The app makes no asset-price API requests in the browser network panel.
 - Daily update creates a snapshot.
 - Dashboard totals update.
 - Reports show chart data.
