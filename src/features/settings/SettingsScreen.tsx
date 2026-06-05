@@ -1,0 +1,111 @@
+import type { FormEvent } from "react";
+import type { Asset, Liability, Settings, Snapshot } from "../../domain/types";
+import { signOutUser } from "../../firebase/auth";
+import { createBackup, parseBackup } from "../../utils/backup";
+
+type SettingsScreenProps = {
+  assets: Asset[];
+  liabilities: Liability[];
+  snapshots: Snapshot[];
+  settings: Settings;
+  onSaveSettings: (settings: Settings) => Promise<void>;
+  onSaveAsset: (asset: Asset) => Promise<void>;
+  onSaveLiability: (liability: Liability) => Promise<void>;
+  onSaveSnapshot: (snapshot: Snapshot) => Promise<void>;
+};
+
+export function SettingsScreen({
+  assets,
+  liabilities,
+  snapshots,
+  settings,
+  onSaveSettings,
+  onSaveAsset,
+  onSaveLiability,
+  onSaveSnapshot
+}: SettingsScreenProps) {
+  async function handleSettingsSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    await onSaveSettings({ mainCurrency: String(form.get("mainCurrency") ?? "THB").toUpperCase() });
+  }
+
+  function exportBackup() {
+    const payload = createBackup(settings, assets, liabilities, snapshots);
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `wealth-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importBackup(file: File | undefined) {
+    if (!file) {
+      return;
+    }
+
+    const backup = parseBackup(await file.text());
+    await Promise.all([
+      onSaveSettings(backup.settings),
+      ...backup.assets.map((asset) => onSaveAsset(asset)),
+      ...backup.liabilities.map((liability) => onSaveLiability(liability)),
+      ...backup.snapshots.map((snapshot) => onSaveSnapshot(snapshot))
+    ]);
+  }
+
+  return (
+    <section className="screen-stack">
+      <div className="screen-title">
+        <p className="screen-kicker">Settings</p>
+        <h1>App & backup</h1>
+        <p>Use the same Firebase env vars in Vercel for production.</p>
+      </div>
+
+      <article className="panel">
+        <form className="form-grid" onSubmit={handleSettingsSubmit}>
+          <label>
+            Main Currency
+            <input name="mainCurrency" defaultValue={settings.mainCurrency} maxLength={3} required />
+          </label>
+          <button className="primary-button" type="submit">
+            Save Currency
+          </button>
+        </form>
+      </article>
+
+      <article className="panel">
+        <div className="section-heading">
+          <h2>Backup</h2>
+          <span>JSON</span>
+        </div>
+        <p className="empty-text">Export includes manually entered assets, liabilities, snapshots, and settings.</p>
+        <button className="secondary-button" type="button" onClick={exportBackup}>
+          Export JSON
+        </button>
+        <label>
+          Import JSON
+          <input
+            accept="application/json"
+            type="file"
+            onChange={(event) => {
+              importBackup(event.currentTarget.files?.[0]).catch(() => {
+                alert("Import failed. Check that the file is a valid Wealth Tracker backup.");
+              });
+              event.currentTarget.value = "";
+            }}
+          />
+        </label>
+      </article>
+
+      <article className="panel">
+        <div className="section-heading">
+          <h2>Session</h2>
+        </div>
+        <button className="secondary-button" type="button" onClick={signOutUser}>
+          Sign Out
+        </button>
+      </article>
+    </section>
+  );
+}
