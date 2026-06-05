@@ -1,7 +1,7 @@
 {
-  "name": "Wealth Tracker",
+  "name": "ตัวติดตามความมั่งคั่ง",
   "short_name": "Wealth",
-  "description": "Manual investable wealth tracking with daily snapshots and unrealized P/L.",
+  "description": "ติดตามสินทรัพย์ลงทุน หนี้สิน ภาพรวมรายวัน และกำไรขาดทุนที่ยังไม่รับรู้แบบกรอกเอง",
   "theme_color": "#f7f8f4",
   "background_color": "#f7f8f4",
   "display": "standalone",

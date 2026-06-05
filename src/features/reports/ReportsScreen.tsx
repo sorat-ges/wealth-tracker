@@ -27,15 +27,15 @@ export function ReportsScreen({ assets, snapshots, settings }: ReportsScreenProp
   return (
     <section className="screen-stack">
       <div className="screen-title">
-        <p className="screen-kicker">Reports</p>
-        <h1>Trend & P/L</h1>
-        <p>Reports use only values you manually saved.</p>
+        <p className="screen-kicker">รายงาน</p>
+        <h1>แนวโน้มและกำไร/ขาดทุน</h1>
+        <p>รายงานคำนวณจากข้อมูลที่คุณบันทึกเองเท่านั้น</p>
       </div>
 
       <article className="panel">
         <div className="section-heading">
-          <h2>Investable Wealth Trend</h2>
-          <span>{snapshots.length} snapshots</span>
+          <h2>แนวโน้มความมั่งคั่งลงทุน</h2>
+          <span>{snapshots.length} สแนปช็อต</span>
         </div>
         {trend.length ? (
           <div className="chart-box">
@@ -56,14 +56,14 @@ export function ReportsScreen({ assets, snapshots, settings }: ReportsScreenProp
             </ResponsiveContainer>
           </div>
         ) : (
-          <p className="empty-text">Save snapshots to build a trend.</p>
+          <p className="empty-text">บันทึกสแนปช็อตเพื่อดูแนวโน้ม</p>
         )}
       </article>
 
       <article className="panel">
         <div className="section-heading">
-          <h2>Unrealized P/L</h2>
-          <span>{plRows.length} assets</span>
+          <h2>กำไร/ขาดทุนที่ยังไม่รับรู้</h2>
+          <span>{plRows.length} รายการ</span>
         </div>
         {plRows.length ? (
           <div className="chart-box">
@@ -78,7 +78,7 @@ export function ReportsScreen({ assets, snapshots, settings }: ReportsScreenProp
             </ResponsiveContainer>
           </div>
         ) : (
-          <p className="empty-text">Market assets with cost basis will show unrealized P/L here.</p>
+          <p className="empty-text">สินทรัพย์ตลาดที่มีต้นทุนจะแสดงกำไร/ขาดทุนที่ยังไม่รับรู้ที่นี่</p>
         )}
       </article>
     </section>

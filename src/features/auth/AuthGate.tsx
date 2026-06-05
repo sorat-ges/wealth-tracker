@@ -20,7 +20,7 @@ export function AuthGate({ children }: AuthGateProps) {
   }, []);
 
   if (loading) {
-    return <main className="app-shell center-state">Loading...</main>;
+    return <main className="app-shell center-state">กำลังโหลด...</main>;
   }
 
   if (!user) {
@@ -28,8 +28,8 @@ export function AuthGate({ children }: AuthGateProps) {
       <main className="app-shell auth-screen">
         <section className="auth-card">
           <p className="screen-kicker">Wealth Tracker</p>
-          <h1>Private investable wealth tracking.</h1>
-          <p>Sign in with Google to sync manual assets, liabilities, snapshots, and unrealized P/L reports.</p>
+          <h1>ติดตามความมั่งคั่งลงทุนแบบส่วนตัว</h1>
+          <p>เข้าสู่ระบบด้วย Google เพื่อซิงก์สินทรัพย์ หนี้สิน snapshot และรายงานกำไรขาดทุนที่ยังไม่รับรู้</p>
           {error ? <p className="error-text">{error}</p> : null}
           <button
             className="primary-button"
@@ -39,12 +39,12 @@ export function AuthGate({ children }: AuthGateProps) {
                 setError(null);
                 await signInWithGoogle();
               } catch {
-                setError("Google sign-in failed. Check Firebase authorized domains and try again.");
+                setError("เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาตรวจสอบ Firebase authorized domains แล้วลองอีกครั้ง");
               }
             }}
           >
             <LogIn size={18} />
-            Continue with Google
+            เข้าสู่ระบบด้วย Google
           </button>
         </section>
       </main>

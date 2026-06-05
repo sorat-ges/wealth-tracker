@@ -1,5 +1,5 @@
 export function formatCurrency(value: number, currency = "THB") {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("th-TH", {
     style: "currency",
     currency,
     maximumFractionDigits: 0
@@ -11,7 +11,7 @@ export function formatPercent(value: number) {
 }
 
 export function formatDateLabel(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("th-TH", {
     month: "short",
     day: "numeric"
   }).format(new Date(`${value}T00:00:00`));

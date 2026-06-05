@@ -57,40 +57,40 @@ export function SettingsScreen({
   return (
     <section className="screen-stack">
       <div className="screen-title">
-        <p className="screen-kicker">Settings</p>
-        <h1>App & backup</h1>
-        <p>Use the same Firebase env vars in Vercel for production.</p>
+        <p className="screen-kicker">ตั้งค่า</p>
+        <h1>แอปและสำรองข้อมูล</h1>
+        <p>ใช้ค่า Firebase env vars ชุดเดียวกันใน Vercel สำหรับ production</p>
       </div>
 
       <article className="panel">
         <form className="form-grid" onSubmit={handleSettingsSubmit}>
           <label>
-            Main Currency
+            สกุลเงินหลัก
             <input name="mainCurrency" defaultValue={settings.mainCurrency} maxLength={3} required />
           </label>
           <button className="primary-button" type="submit">
-            Save Currency
+            บันทึกสกุลเงิน
           </button>
         </form>
       </article>
 
       <article className="panel">
         <div className="section-heading">
-          <h2>Backup</h2>
+          <h2>สำรองข้อมูล</h2>
           <span>JSON</span>
         </div>
-        <p className="empty-text">Export includes manually entered assets, liabilities, snapshots, and settings.</p>
+        <p className="empty-text">ไฟล์ export รวมสินทรัพย์ หนี้สิน สแนปช็อต และการตั้งค่าที่คุณกรอกเอง</p>
         <button className="secondary-button" type="button" onClick={exportBackup}>
-          Export JSON
+          ส่งออก JSON
         </button>
         <label>
-          Import JSON
+          นำเข้า JSON
           <input
             accept="application/json"
             type="file"
             onChange={(event) => {
               importBackup(event.currentTarget.files?.[0]).catch(() => {
-                alert("Import failed. Check that the file is a valid Wealth Tracker backup.");
+                alert("นำเข้าไม่สำเร็จ กรุณาตรวจสอบว่าไฟล์เป็น backup ของ Wealth Tracker ที่ถูกต้อง");
               });
               event.currentTarget.value = "";
             }}
@@ -100,10 +100,10 @@ export function SettingsScreen({
 
       <article className="panel">
         <div className="section-heading">
-          <h2>Session</h2>
+          <h2>เซสชัน</h2>
         </div>
         <button className="secondary-button" type="button" onClick={signOutUser}>
-          Sign Out
+          ออกจากระบบ
         </button>
       </article>
     </section>

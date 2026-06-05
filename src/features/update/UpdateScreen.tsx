@@ -63,23 +63,23 @@ export function UpdateScreen({
   return (
     <section className="screen-stack">
       <div className="screen-title">
-        <p className="screen-kicker">Daily Update</p>
-        <h1>Manual values only</h1>
-        <p>Enter prices and balances yourself. No stock, index, crypto, broker, or bank APIs are used.</p>
+        <p className="screen-kicker">อัปเดตรายวัน</p>
+        <h1>กรอกมูลค่าด้วยตัวเอง</h1>
+        <p>กรอกราคาและยอดหนี้เองทั้งหมด ไม่มีการเรียก API หุ้น ดัชนี คริปโต โบรกเกอร์ หรือธนาคาร</p>
       </div>
 
       <article className="summary-strip">
-        <span>Current Investable Wealth</span>
+        <span>ความมั่งคั่งลงทุนปัจจุบัน</span>
         <strong>{formatCurrency(summary.investableWealth, settings.mainCurrency)}</strong>
       </article>
 
       <form className="panel form-grid" onSubmit={handleSubmit}>
         <label>
-          Snapshot Date
+          วันที่บันทึกสแนปช็อต
           <input name="date" type="date" defaultValue={todayId()} required />
         </label>
 
-        <div className="form-section-label">Assets</div>
+        <div className="form-section-label">สินทรัพย์</div>
         {assets.map((asset) => (
           <label key={asset.id}>
             {asset.name}
@@ -91,12 +91,12 @@ export function UpdateScreen({
               step="any"
               defaultValue={marketAssetTypes.has(asset.type) ? asset.currentPrice ?? 0 : asset.currentValue ?? 0}
             />
-            <small>{marketAssetTypes.has(asset.type) ? "Manual current price" : "Manual current value"}</small>
+            <small>{marketAssetTypes.has(asset.type) ? "ราคาปัจจุบันที่กรอกเอง" : "มูลค่าปัจจุบันที่กรอกเอง"}</small>
           </label>
         ))}
-        {!assets.length ? <p className="empty-text">Add assets before saving a snapshot.</p> : null}
+        {!assets.length ? <p className="empty-text">เพิ่มสินทรัพย์ก่อนบันทึกสแนปช็อต</p> : null}
 
-        <div className="form-section-label">Liabilities</div>
+        <div className="form-section-label">หนี้สิน</div>
         {liabilities.map((liability) => (
           <label key={liability.id}>
             {liability.name}
@@ -108,12 +108,12 @@ export function UpdateScreen({
               step="any"
               defaultValue={liability.currentBalance}
             />
-            <small>Manual remaining debt balance</small>
+            <small>ยอดหนี้คงเหลือที่กรอกเอง</small>
           </label>
         ))}
 
         <button className="primary-button" type="submit" disabled={!assets.length && !liabilities.length}>
-          Save Daily Snapshot
+          บันทึกสแนปช็อตวันนี้
         </button>
       </form>
     </section>

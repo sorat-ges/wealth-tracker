@@ -75,7 +75,7 @@ function SignedInApp({ user }: { user: User }) {
     <main className="app-shell app-with-tabs">
       <header className="top-bar">
         <div>
-          <p className="screen-kicker">Signed in</p>
+          <p className="screen-kicker">เข้าสู่ระบบแล้ว</p>
           <strong>{user.displayName ?? user.email}</strong>
         </div>
       </header>
@@ -100,7 +100,7 @@ function SignedInApp({ user }: { user: User }) {
         <SettingsScreen assets={assets} liabilities={liabilities} snapshots={snapshots} settings={settings} {...actions} />
       ) : null}
 
-      <nav className="bottom-tabs" aria-label="Primary navigation">
+      <nav className="bottom-tabs" aria-label="เมนูหลัก">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const selected = activeTab === tab.id;

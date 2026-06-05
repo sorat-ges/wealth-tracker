@@ -14,23 +14,25 @@ type AssetsScreenProps = {
 };
 
 const assetTypes: { value: AssetType; label: string }[] = [
-  { value: "cash", label: "Cash" },
-  { value: "stock", label: "Stock" },
-  { value: "fund", label: "Fund / ETF" },
-  { value: "crypto", label: "Crypto" },
-  { value: "gold", label: "Gold" },
-  { value: "other", label: "Other Investable" }
+  { value: "cash", label: "เงินสด / เงินฝาก" },
+  { value: "stock", label: "หุ้น" },
+  { value: "fund", label: "กองทุน / ETF" },
+  { value: "crypto", label: "คริปโต" },
+  { value: "gold", label: "ทอง" },
+  { value: "other", label: "สินทรัพย์ลงทุนอื่น" }
 ];
 
 const liabilityTypes: { value: LiabilityType; label: string }[] = [
-  { value: "carLoan", label: "Car Loan" },
-  { value: "homeLoan", label: "Home Loan" },
-  { value: "personalLoan", label: "Personal Loan" },
-  { value: "creditCard", label: "Credit Card" },
-  { value: "otherDebt", label: "Other Debt" }
+  { value: "carLoan", label: "หนี้รถยนต์" },
+  { value: "homeLoan", label: "หนี้บ้าน / คอนโด" },
+  { value: "personalLoan", label: "สินเชื่อส่วนบุคคล" },
+  { value: "creditCard", label: "บัตรเครดิต" },
+  { value: "otherDebt", label: "หนี้อื่น" }
 ];
 
 const marketAssetTypes = new Set<AssetType>(["stock", "fund", "crypto", "gold"]);
+const assetTypeLabels = Object.fromEntries(assetTypes.map((type) => [type.value, type.label])) as Record<AssetType, string>;
+const liabilityTypeLabels = Object.fromEntries(liabilityTypes.map((type) => [type.value, type.label])) as Record<LiabilityType, string>;
 
 export function AssetsScreen({
   assets,
@@ -48,7 +50,7 @@ export function AssetsScreen({
     const now = new Date().toISOString();
     const asset: Asset = {
       id: crypto.randomUUID(),
-      name: String(form.get("name") ?? "Asset").trim(),
+      name: String(form.get("name") ?? "สินทรัพย์").trim(),
       type,
       quantity: marketAssetTypes.has(type) ? toNumber(form.get("quantity")) : undefined,
       averageCost: marketAssetTypes.has(type) ? toNumber(form.get("averageCost")) : undefined,
@@ -68,7 +70,7 @@ export function AssetsScreen({
     const now = new Date().toISOString();
     const liability: Liability = {
       id: crypto.randomUUID(),
-      name: String(form.get("name") ?? "Liability").trim(),
+      name: String(form.get("name") ?? "หนี้สิน").trim(),
       type: form.get("type") as LiabilityType,
       currentBalance: toNumber(form.get("currentBalance")),
       active: true,
@@ -82,23 +84,23 @@ export function AssetsScreen({
   return (
     <section className="screen-stack">
       <div className="screen-title">
-        <p className="screen-kicker">Manual Portfolio</p>
-        <h1>Assets & debts</h1>
-        <p>Track investable assets only. Personal car value is excluded; car loan debt is included.</p>
+        <p className="screen-kicker">พอร์ตแบบกรอกเอง</p>
+        <h1>สินทรัพย์และหนี้สิน</h1>
+        <p>นับเฉพาะสินทรัพย์ลงทุน ไม่นับมูลค่ารถส่วนตัว แต่ยังนับหนี้รถยนต์เป็นหนี้สิน</p>
       </div>
 
       <article className="panel">
         <div className="section-heading">
-          <h2>Add Asset</h2>
+          <h2>เพิ่มสินทรัพย์</h2>
           <Plus size={18} />
         </div>
         <form className="form-grid" onSubmit={handleAssetSubmit}>
           <label>
-            Name
-            <input name="name" required placeholder="Emergency cash, S&P fund, BTC" />
+            ชื่อ
+            <input name="name" required placeholder="เงินสำรอง, กองทุน S&P, BTC" />
           </label>
           <label>
-            Type
+            ประเภท
             <select name="type" defaultValue="cash">
               {assetTypes.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -108,39 +110,39 @@ export function AssetsScreen({
             </select>
           </label>
           <label>
-            Quantity
-            <input name="quantity" inputMode="decimal" type="number" min="0" step="any" placeholder="For market assets" />
+            จำนวนหน่วย
+            <input name="quantity" inputMode="decimal" type="number" min="0" step="any" placeholder="สำหรับหุ้น กองทุน คริปโต ทอง" />
           </label>
           <label>
-            Average Cost
-            <input name="averageCost" inputMode="decimal" type="number" min="0" step="any" placeholder="Manual cost" />
+            ต้นทุนเฉลี่ย
+            <input name="averageCost" inputMode="decimal" type="number" min="0" step="any" placeholder="กรอกต้นทุนเอง" />
           </label>
           <label>
-            Current Price
-            <input name="currentPrice" inputMode="decimal" type="number" min="0" step="any" placeholder="Manual price" />
+            ราคาปัจจุบัน
+            <input name="currentPrice" inputMode="decimal" type="number" min="0" step="any" placeholder="กรอกราคาเอง" />
           </label>
           <label>
-            Current Value
-            <input name="currentValue" inputMode="decimal" type="number" min="0" step="any" placeholder="Cash or other value" />
+            มูลค่าปัจจุบัน
+            <input name="currentValue" inputMode="decimal" type="number" min="0" step="any" placeholder="เงินสดหรือมูลค่าอื่น" />
           </label>
           <button className="primary-button" type="submit">
-            Save Asset
+            บันทึกสินทรัพย์
           </button>
         </form>
       </article>
 
       <article className="panel">
         <div className="section-heading">
-          <h2>Add Liability</h2>
+          <h2>เพิ่มหนี้สิน</h2>
           <Plus size={18} />
         </div>
         <form className="form-grid" onSubmit={handleLiabilitySubmit}>
           <label>
-            Name
-            <input name="name" required placeholder="Car loan" />
+            ชื่อ
+            <input name="name" required placeholder="หนี้รถยนต์" />
           </label>
           <label>
-            Type
+            ประเภท
             <select name="type" defaultValue="carLoan">
               {liabilityTypes.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -150,18 +152,18 @@ export function AssetsScreen({
             </select>
           </label>
           <label>
-            Current Balance
+            ยอดคงเหลือปัจจุบัน
             <input name="currentBalance" inputMode="decimal" type="number" min="0" step="any" required />
           </label>
           <button className="primary-button" type="submit">
-            Save Liability
+            บันทึกหนี้สิน
           </button>
         </form>
       </article>
 
       <article className="panel">
         <div className="section-heading">
-          <h2>Investable Assets</h2>
+          <h2>สินทรัพย์ลงทุน</h2>
           <span>{assets.length}</span>
         </div>
         <div className="list-stack">
@@ -169,23 +171,23 @@ export function AssetsScreen({
             <div className="list-row" key={asset.id}>
               <div>
                 <strong>{asset.name}</strong>
-                <span>{asset.type}</span>
+                <span>{assetTypeLabels[asset.type]}</span>
               </div>
               <div className="row-actions">
                 <span>{formatCurrency(asset.currentValue ?? (asset.quantity ?? 0) * (asset.currentPrice ?? 0), settings.mainCurrency)}</span>
-                <button className="icon-button" type="button" onClick={() => onDeleteAsset(asset.id)} aria-label={`Delete ${asset.name}`}>
+                <button className="icon-button" type="button" onClick={() => onDeleteAsset(asset.id)} aria-label={`ลบ ${asset.name}`}>
                   <Trash2 size={16} />
                 </button>
               </div>
             </div>
           ))}
-          {!assets.length ? <p className="empty-text">No assets yet.</p> : null}
+          {!assets.length ? <p className="empty-text">ยังไม่มีสินทรัพย์</p> : null}
         </div>
       </article>
 
       <article className="panel">
         <div className="section-heading">
-          <h2>Liabilities</h2>
+          <h2>หนี้สิน</h2>
           <span>{liabilities.length}</span>
         </div>
         <div className="list-stack">
@@ -193,17 +195,17 @@ export function AssetsScreen({
             <div className="list-row" key={liability.id}>
               <div>
                 <strong>{liability.name}</strong>
-                <span>{liability.type}</span>
+                <span>{liabilityTypeLabels[liability.type]}</span>
               </div>
               <div className="row-actions">
                 <span>{formatCurrency(liability.currentBalance, settings.mainCurrency)}</span>
-                <button className="icon-button" type="button" onClick={() => onDeleteLiability(liability.id)} aria-label={`Delete ${liability.name}`}>
+                <button className="icon-button" type="button" onClick={() => onDeleteLiability(liability.id)} aria-label={`ลบ ${liability.name}`}>
                   <Trash2 size={16} />
                 </button>
               </div>
             </div>
           ))}
-          {!liabilities.length ? <p className="empty-text">No debts yet. Add your car loan here.</p> : null}
+          {!liabilities.length ? <p className="empty-text">ยังไม่มีหนี้สิน เพิ่มหนี้รถยนต์ได้ที่นี่</p> : null}
         </div>
       </article>
     </section>
