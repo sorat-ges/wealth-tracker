@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   deleteAsset,
   deleteLiability,
+  deleteSnapshot,
   loadSettings,
   saveAsset,
   saveLiability,
@@ -64,6 +65,7 @@ function SignedInApp({ user }: { user: User }) {
       onSaveLiability: (liability: Liability) => saveLiability(uid, liability),
       onDeleteLiability: (liabilityId: string) => deleteLiability(uid, liabilityId),
       onSaveSnapshot: (snapshot: Snapshot) => saveSnapshot(uid, snapshot),
+      onDeleteSnapshot: (snapshotId: string) => deleteSnapshot(uid, snapshotId),
       onSaveSettings: async (nextSettings: Settings) => {
         await saveSettings(uid, nextSettings);
         setSettings(nextSettings);
@@ -96,7 +98,9 @@ function SignedInApp({ user }: { user: User }) {
       {activeTab === "update" ? (
         <UpdateScreen assets={assets} liabilities={liabilities} settings={settings} {...actions} />
       ) : null}
-      {activeTab === "reports" ? <ReportsScreen assets={assets} snapshots={snapshots} settings={settings} /> : null}
+      {activeTab === "reports" ? (
+        <ReportsScreen assets={assets} snapshots={snapshots} settings={settings} {...actions} />
+      ) : null}
       {activeTab === "settings" ? (
         <SettingsScreen assets={assets} liabilities={liabilities} snapshots={snapshots} settings={settings} {...actions} />
       ) : null}

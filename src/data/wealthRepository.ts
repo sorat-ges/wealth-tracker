@@ -80,6 +80,10 @@ export async function saveSnapshot(uid: string, snapshot: Snapshot) {
   await setDoc(doc(db, getSnapshotPath(uid, snapshot.id)), removeUndefinedFields(snapshot), { merge: true });
 }
 
+export async function deleteSnapshot(uid: string, snapshotId: string) {
+  await deleteDoc(doc(db, getSnapshotPath(uid, snapshotId)));
+}
+
 export function removeUndefinedFields<T>(value: T): T {
   if (Array.isArray(value)) {
     return value.map((item) => removeUndefinedFields(item)) as T;
