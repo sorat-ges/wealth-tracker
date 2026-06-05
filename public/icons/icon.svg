@@ -1,5 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#172019"/>
-  <path d="M144 336V204h56v132h-56Zm84 0V156h56v180h-56Zm84 0v-96h56v96h-56Z" fill="#f7f8f4"/>
-  <path d="M136 376h240" stroke="#90d89b" stroke-width="28" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Wealth Tracker">
+  <defs>
+    <linearGradient id="bg" x1="96" x2="416" y1="32" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1f7a4a"/>
+      <stop offset="0.52" stop-color="#17633a"/>
+      <stop offset="1" stop-color="#102519"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="160" x2="356" y1="142" y2="376" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f5d887"/>
+      <stop offset="1" stop-color="#b8892d"/>
+    </linearGradient>
+    <filter id="shadow" x="84" y="92" width="344" height="344" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" flood-color="#06120b" flood-opacity="0.28" stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M104 392c55-133 116-200 183-200 39 0 70 17 97 52" fill="none" opacity="0.16" stroke="#ffffff" stroke-linecap="round" stroke-width="36"/>
+
+  <g filter="url(#shadow)">
+    <circle cx="256" cy="256" r="132" fill="#f8fbf4"/>
+    <circle cx="256" cy="256" r="96" fill="#eef5ed"/>
+  </g>
+
+  <path d="M154 288h52l30-92 40 132 34-86 22 46h34" fill="none" stroke="#17633a" stroke-linecap="round" stroke-linejoin="round" stroke-width="24"/>
+  <circle cx="360" cy="288" r="18" fill="url(#gold)"/>
+  <path d="M178 342h156" fill="none" stroke="url(#gold)" stroke-linecap="round" stroke-width="26"/>
+  <path d="M178 342h96" fill="none" stroke="#f5d887" stroke-linecap="round" stroke-width="10" opacity="0.72"/>
 </svg>
