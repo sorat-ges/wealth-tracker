@@ -179,7 +179,7 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
                     <Pencil size={16} />
                   </button>
                   <button
-                    className="icon-button"
+                    className="icon-button danger-button"
                     type="button"
                     onClick={() => handleDeleteSnapshot(snapshot)}
                     aria-label={`ลบสแนปช็อต ${formatDateLabel(snapshot.date)}`}

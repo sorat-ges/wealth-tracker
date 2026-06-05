@@ -220,7 +220,7 @@ export function AssetsScreen({
               </div>
               <div className="row-actions">
                 <span>{formatCurrency(asset.currentValue ?? (asset.quantity ?? 0) * (asset.currentPrice ?? 0), settings.mainCurrency)}</span>
-                <button className="icon-button" type="button" onClick={() => onDeleteAsset(asset.id)} aria-label={`ลบ ${asset.name}`}>
+                <button className="icon-button danger-button" type="button" onClick={() => onDeleteAsset(asset.id)} aria-label={`ลบ ${asset.name}`}>
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -244,7 +244,12 @@ export function AssetsScreen({
               </div>
               <div className="row-actions">
                 <span>{formatCurrency(liability.currentBalance, settings.mainCurrency)}</span>
-                <button className="icon-button" type="button" onClick={() => onDeleteLiability(liability.id)} aria-label={`ลบ ${liability.name}`}>
+                <button
+                  className="icon-button danger-button"
+                  type="button"
+                  onClick={() => onDeleteLiability(liability.id)}
+                  aria-label={`ลบ ${liability.name}`}
+                >
                   <Trash2 size={16} />
                 </button>
               </div>
