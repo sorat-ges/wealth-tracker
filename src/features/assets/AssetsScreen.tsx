@@ -52,10 +52,11 @@ export function AssetsScreen({
 
   async function handleAssetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setSaving(true);
     setError(null);
     setMessage(null);
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const type = form.get("type") as AssetType;
     const now = new Date().toISOString();
     const asset: Asset = {
@@ -72,7 +73,7 @@ export function AssetsScreen({
     };
     try {
       await onSaveAsset(asset);
-      event.currentTarget.reset();
+      formElement.reset();
       setSelectedAssetType("cash");
       setMessage("บันทึกสินทรัพย์แล้ว");
     } catch (saveError) {
@@ -84,10 +85,11 @@ export function AssetsScreen({
 
   async function handleLiabilitySubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setSaving(true);
     setError(null);
     setMessage(null);
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const now = new Date().toISOString();
     const liability: Liability = {
       id: crypto.randomUUID(),
@@ -100,7 +102,7 @@ export function AssetsScreen({
     };
     try {
       await onSaveLiability(liability);
-      event.currentTarget.reset();
+      formElement.reset();
       setMessage("บันทึกหนี้สินแล้ว");
     } catch (saveError) {
       setError(getSaveErrorMessage(saveError));
