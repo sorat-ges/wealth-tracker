@@ -5,7 +5,7 @@ Status: Approved for planning
 
 ## Goal
 
-Build a mobile-first progressive web app for personal wealth tracking. The app helps one person manually update asset values every day, see total net worth, and track unrealized profit and loss without bank or broker integrations.
+Build a mobile-first progressive web app for personal investable wealth tracking. The app helps one person manually update investable asset values and liabilities every day, see investable wealth after debt, and track unrealized profit and loss without bank or broker integrations.
 
 The app will be designed first for iPhone 17 portrait use and will remain responsive for smaller iPhones, tablets, and desktop browsers.
 
@@ -24,7 +24,7 @@ Included in v1:
 - Market assets with quantity, average cost, and manually entered current price.
 - Non-market assets with manually entered current value.
 - Liabilities with manually entered balance.
-- Daily snapshots of total net worth and asset values.
+- Daily snapshots of investable wealth, investable asset values, and liabilities.
 - Unrealized P/L calculations per asset and for the whole portfolio.
 - Mobile-first dashboard, assets, update, reports, and settings screens.
 - JSON export/import backup.
@@ -82,6 +82,7 @@ Firestore data will be scoped by authenticated user:
 users/{userId}
   settings/main
   assets/{assetId}
+  liabilities/{liabilityId}
   snapshots/{snapshotId}
 ```
 
@@ -93,10 +94,12 @@ Firebase config values will come from Vercel environment variables. They should 
 
 The dashboard is the first screen. It focuses on the daily wealth status:
 
-- Total net worth.
+- Investable wealth.
+- Total investable assets.
+- Total liabilities, including car loans.
 - Change versus previous snapshot.
 - Total unrealized P/L and percent.
-- Mini net worth trend chart.
+- Mini investable wealth trend chart.
 - Asset allocation summary.
 - Top assets by current value.
 - Primary action: Update Today.
@@ -107,10 +110,12 @@ The assets screen manages holdings and liabilities:
 
 - List assets grouped by type.
 - Add, edit, archive, or delete assets.
-- Support asset types: cash, stock, fund, crypto, property, other, liability.
+- Support investable asset types: cash, stock, fund, crypto, gold, other.
+- Support liability types: car loan, home loan, personal loan, credit card, other debt.
 - For market assets, store quantity, average cost, and latest manual price.
 - For non-market assets, store latest manual current value.
-- For liabilities, store balance as a negative contribution to net worth.
+- For liabilities, store balance as a negative contribution to investable wealth.
+- Personal-use assets such as cars are not counted as wealth in version 1. A car loan is still counted as a liability.
 
 ### Daily Update
 
@@ -152,11 +157,25 @@ Settings cover app-level preferences and data portability:
 type Asset = {
   id: string;
   name: string;
-  type: "cash" | "stock" | "fund" | "crypto" | "property" | "other" | "liability";
+  type: "cash" | "stock" | "fund" | "crypto" | "gold" | "other";
   quantity?: number;
   averageCost?: number;
   currentPrice?: number;
   currentValue?: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
+### Liability
+
+```ts
+type Liability = {
+  id: string;
+  name: string;
+  type: "carLoan" | "homeLoan" | "personalLoan" | "creditCard" | "otherDebt";
+  currentBalance: number;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -169,12 +188,13 @@ type Asset = {
 type Snapshot = {
   id: string;
   date: string;
-  totalNetWorth: number;
-  totalAssets: number;
+  investableWealth: number;
+  totalInvestableAssets: number;
   totalLiabilities: number;
   totalUnrealizedPL: number;
   totalUnrealizedPLPercent: number;
   items: SnapshotItem[];
+  liabilities: SnapshotLiabilityItem[];
   createdAt: string;
   updatedAt: string;
 };
@@ -191,6 +211,15 @@ type SnapshotItem = {
   unrealizedPLPercent?: number;
   quantity?: number;
   price?: number;
+};
+```
+
+### SnapshotLiabilityItem
+
+```ts
+type SnapshotLiabilityItem = {
+  liabilityId: string;
+  balance: number;
 };
 ```
 
@@ -228,13 +257,23 @@ Unrealized P/L percent:
 (unrealizedPL / costBasis) * 100
 ```
 
-Net worth:
+Investable wealth:
 
 ```text
-totalAssets - totalLiabilities
+totalInvestableAssets - totalLiabilities
 ```
 
 If cost basis is missing or zero, unrealized P/L percent is not shown rather than dividing by zero.
+
+Example with a car loan:
+
+```text
+Cash + stocks + funds + crypto + gold = 500,000
+Remaining car loan balance = 300,000
+Investable wealth = 200,000
+```
+
+The car's resale value is not counted in version 1 because the user wants the main number to represent investable wealth, not total personal net worth.
 
 ## Mobile Design
 

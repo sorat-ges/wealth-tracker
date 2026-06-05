@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a mobile-first React/Vite PWA for manual wealth tracking with Google login, Firestore persistence, unrealized P/L reporting, and Vercel deployment readiness.
+**Goal:** Build a mobile-first React/Vite PWA for manual investable wealth tracking with Google login, Firestore persistence, unrealized P/L reporting, liability tracking, and Vercel deployment readiness.
 
 **Architecture:** The app is a client-side PWA hosted by Vercel. Firebase Auth provides Google sign-in, Firestore stores each user's manually entered data under `users/{uid}`, and feature modules consume typed repository functions instead of calling Firebase directly. Phase 1 does not call third-party stock, index, crypto, fund, broker, bank, or market-data APIs; every asset price and value is entered by the user. The UI is optimized for iPhone portrait with responsive desktop expansion.
 
@@ -28,7 +28,7 @@
 - Create `src/firebase/auth.ts`: Google sign-in/sign-out helpers.
 - Create `src/firebase/firestore.ts`: Firestore instance and offline persistence.
 - Create `src/domain/types.ts`: shared domain types.
-- Create `src/domain/calculations.ts`: value, cost basis, net worth, and P/L math.
+- Create `src/domain/calculations.ts`: value, cost basis, investable wealth, liability, and P/L math.
 - Create `src/domain/calculations.test.ts`: focused calculation tests.
 - Create `src/data/wealthRepository.ts`: user-scoped Firestore CRUD and subscriptions.
 - Create `src/data/wealthRepository.test.ts`: repository path and payload tests with mocked Firebase calls.
@@ -248,7 +248,7 @@ export function App() {
     <main className="app-shell">
       <section className="hero-panel">
         <p className="screen-kicker">Wealth Tracker</p>
-        <h1>Track your net worth every day.</h1>
+        <h1>Track your investable wealth every day.</h1>
         <p>Google login, Firestore sync, daily snapshots, and unrealized profit/loss reports.</p>
       </section>
     </main>
@@ -455,7 +455,8 @@ git commit -m "feat: add Firebase foundation"
 Create `src/domain/types.ts`:
 
 ```ts
-export type AssetType = "cash" | "stock" | "fund" | "crypto" | "property" | "other" | "liability";
+export type AssetType = "cash" | "stock" | "fund" | "crypto" | "gold" | "other";
+export type LiabilityType = "carLoan" | "homeLoan" | "personalLoan" | "creditCard" | "otherDebt";
 
 export type Asset = {
   id: string;
@@ -465,6 +466,16 @@ export type Asset = {
   averageCost?: number;
   currentPrice?: number;
   currentValue?: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Liability = {
+  id: string;
+  name: string;
+  type: LiabilityType;
+  currentBalance: number;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -483,14 +494,20 @@ export type SnapshotItem = {
 export type Snapshot = {
   id: string;
   date: string;
-  totalNetWorth: number;
-  totalAssets: number;
+  investableWealth: number;
+  totalInvestableAssets: number;
   totalLiabilities: number;
   totalUnrealizedPL: number;
   totalUnrealizedPLPercent: number;
   items: SnapshotItem[];
+  liabilities: SnapshotLiabilityItem[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type SnapshotLiabilityItem = {
+  liabilityId: string;
+  balance: number;
 };
 
 export type Settings = {
@@ -505,7 +522,7 @@ Create `src/domain/calculations.test.ts`:
 ```ts
 import { describe, expect, it } from "vitest";
 import { calculateAssetSnapshotItem, calculateSnapshotSummary } from "./calculations";
-import type { Asset } from "./types";
+import type { Asset, Liability } from "./types";
 
 describe("wealth calculations", () => {
   it("calculates market asset value and unrealized P/L", () => {
@@ -532,7 +549,7 @@ describe("wealth calculations", () => {
     });
   });
 
-  it("treats liabilities as negative net worth contribution", () => {
+  it("subtracts car loan debt from investable wealth without counting the car as an asset", () => {
     const assets: Asset[] = [
       {
         id: "cash",
@@ -542,22 +559,24 @@ describe("wealth calculations", () => {
         active: true,
         createdAt: "2026-06-05T00:00:00.000Z",
         updatedAt: "2026-06-05T00:00:00.000Z"
-      },
+      }
+    ];
+    const liabilities: Liability[] = [
       {
-        id: "loan",
-        name: "Loan",
-        type: "liability",
-        currentValue: 1200,
+        id: "car-loan",
+        name: "Car Loan",
+        type: "carLoan",
+        currentBalance: 1200,
         active: true,
         createdAt: "2026-06-05T00:00:00.000Z",
         updatedAt: "2026-06-05T00:00:00.000Z"
       }
     ];
 
-    expect(calculateSnapshotSummary(assets)).toMatchObject({
-      totalAssets: 5000,
+    expect(calculateSnapshotSummary(assets, liabilities)).toMatchObject({
+      totalInvestableAssets: 5000,
       totalLiabilities: 1200,
-      totalNetWorth: 3800
+      investableWealth: 3800
     });
   });
 });
@@ -574,9 +593,9 @@ Expected: FAIL because `src/domain/calculations.ts` does not exist.
 Create `src/domain/calculations.ts`:
 
 ```ts
-import type { Asset, SnapshotItem } from "./types";
+import type { Asset, Liability, SnapshotItem } from "./types";
 
-const marketTypes = new Set<Asset["type"]>(["stock", "fund", "crypto"]);
+const marketTypes = new Set<Asset["type"]>(["stock", "fund", "crypto", "gold"]);
 
 function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
@@ -614,23 +633,25 @@ export function calculateAssetSnapshotItem(asset: Asset): SnapshotItem {
   };
 }
 
-export function calculateSnapshotSummary(assets: Asset[]) {
+export function calculateSnapshotSummary(assets: Asset[], liabilities: Liability[] = []) {
   const activeAssets = assets.filter((asset) => asset.active);
+  const activeLiabilities = liabilities.filter((liability) => liability.active);
   const items = activeAssets.map(calculateAssetSnapshotItem);
-  const totalLiabilities = roundMoney(
-    activeAssets.filter((asset) => asset.type === "liability").reduce((sum, asset) => sum + getCurrentValue(asset), 0),
-  );
-  const totalAssets = roundMoney(
-    activeAssets.filter((asset) => asset.type !== "liability").reduce((sum, asset) => sum + getCurrentValue(asset), 0),
-  );
+  const liabilityItems = activeLiabilities.map((liability) => ({
+    liabilityId: liability.id,
+    balance: roundMoney(liability.currentBalance)
+  }));
+  const totalLiabilities = roundMoney(liabilityItems.reduce((sum, liability) => sum + liability.balance, 0));
+  const totalInvestableAssets = roundMoney(activeAssets.reduce((sum, asset) => sum + getCurrentValue(asset), 0));
   const totalUnrealizedPL = roundMoney(items.reduce((sum, item) => sum + (item.unrealizedPL ?? 0), 0));
   const totalCostBasis = roundMoney(items.reduce((sum, item) => sum + (item.costBasis ?? 0), 0));
 
   return {
     items,
-    totalAssets,
+    liabilities: liabilityItems,
+    totalInvestableAssets,
     totalLiabilities,
-    totalNetWorth: roundMoney(totalAssets - totalLiabilities),
+    investableWealth: roundMoney(totalInvestableAssets - totalLiabilities),
     totalUnrealizedPL,
     totalUnrealizedPLPercent: totalCostBasis > 0 ? roundMoney((totalUnrealizedPL / totalCostBasis) * 100) : 0
   };
@@ -664,13 +685,14 @@ Create `src/data/wealthRepository.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { getUserPath, getAssetPath, getSnapshotPath, getSettingsPath } from "./wealthRepository";
+import { getUserPath, getAssetPath, getLiabilityPath, getSnapshotPath, getSettingsPath } from "./wealthRepository";
 
 describe("wealthRepository paths", () => {
   it("scopes all data below users/{uid}", () => {
     expect(getUserPath("uid-1")).toBe("users/uid-1");
     expect(getSettingsPath("uid-1")).toBe("users/uid-1/settings/main");
     expect(getAssetPath("uid-1", "asset-1")).toBe("users/uid-1/assets/asset-1");
+    expect(getLiabilityPath("uid-1", "car-loan")).toBe("users/uid-1/liabilities/car-loan");
     expect(getSnapshotPath("uid-1", "2026-06-05")).toBe("users/uid-1/snapshots/2026-06-05");
   });
 });
@@ -699,7 +721,7 @@ import {
   type Unsubscribe
 } from "firebase/firestore";
 import { db } from "../firebase/firestore";
-import type { Asset, Settings, Snapshot } from "../domain/types";
+import type { Asset, Liability, Settings, Snapshot } from "../domain/types";
 
 export function getUserPath(uid: string) {
   return `users/${uid}`;
@@ -711,6 +733,10 @@ export function getSettingsPath(uid: string) {
 
 export function getAssetPath(uid: string, assetId: string) {
   return `${getUserPath(uid)}/assets/${assetId}`;
+}
+
+export function getLiabilityPath(uid: string, liabilityId: string) {
+  return `${getUserPath(uid)}/liabilities/${liabilityId}`;
 }
 
 export function getSnapshotPath(uid: string, snapshotId: string) {
@@ -738,6 +764,20 @@ export async function saveAsset(uid: string, asset: Asset) {
 
 export async function deleteAsset(uid: string, assetId: string) {
   await deleteDoc(doc(db, getAssetPath(uid, assetId)));
+}
+
+export function subscribeLiabilities(uid: string, callback: (liabilities: Liability[]) => void): Unsubscribe {
+  return onSnapshot(collection(db, getUserPath(uid), "liabilities"), (snapshot) => {
+    callback(snapshot.docs.map((item) => item.data() as Liability));
+  });
+}
+
+export async function saveLiability(uid: string, liability: Liability) {
+  await setDoc(doc(db, getLiabilityPath(uid, liability.id)), liability, { merge: true });
+}
+
+export async function deleteLiability(uid: string, liabilityId: string) {
+  await deleteDoc(doc(db, getLiabilityPath(uid, liabilityId)));
 }
 
 export function subscribeSnapshots(uid: string, callback: (snapshots: Snapshot[]) => void): Unsubscribe {
@@ -1049,7 +1089,7 @@ export type WealthScreenProps = {
 
 Each screen must have real state and save behavior. Placeholder text is not acceptable after this task.
 
-The asset and update forms must not fetch current prices from external services. Market assets collect `quantity`, `averageCost`, and `currentPrice` from user input. Non-market assets collect `currentValue` from user input. Liabilities collect `currentValue` as the manual current balance.
+The asset and update forms must not fetch current prices from external services. Market assets collect `quantity`, `averageCost`, and `currentPrice` from user input. Non-market assets collect `currentValue` from user input. Liabilities are tracked separately from assets and collect `currentBalance` as the manual remaining debt balance. A car loan liability is included in investable wealth calculations, but the car itself is not counted as an asset in phase 1.
 
 - [ ] **Step 3: Wire screens into App**
 
@@ -1194,7 +1234,7 @@ Create `README.md`:
 ```md
 # Wealth Tracker
 
-Mobile-first PWA for daily net worth tracking, manual asset updates, and unrealized P/L reports.
+Mobile-first PWA for daily investable wealth tracking, manual asset and liability updates, and unrealized P/L reports.
 
 ## Stack
 
@@ -1222,6 +1262,7 @@ VITE_FIREBASE_MEASUREMENT_ID=
 ```text
 users/{uid}/settings/main
 users/{uid}/assets/{assetId}
+users/{uid}/liabilities/{liabilityId}
 users/{uid}/snapshots/{snapshotId}
 ```
 
@@ -1333,7 +1374,7 @@ Spec coverage:
 - Google login: Tasks 2, 5, and 8.
 - Firestore per-user storage: Tasks 2, 4, 7, and 8.
 - One currency: Tasks 3, 6, and 7.
-- Assets, snapshots, unrealized P/L: Tasks 3, 4, and 6.
+- Assets, liabilities, snapshots, unrealized P/L: Tasks 3, 4, and 6.
 - Reports: Task 6.
 - JSON backup/import: Task 7.
 - Vercel readiness: Tasks 1, 7, and 8.
@@ -1345,5 +1386,5 @@ Placeholder scan:
 
 Type consistency:
 
-- Firestore paths use `users/{uid}/settings/main`, `users/{uid}/assets/{assetId}`, and `users/{uid}/snapshots/{snapshotId}` throughout.
-- Domain names match the approved spec: `Asset`, `Snapshot`, `SnapshotItem`, and `Settings`.
+- Firestore paths use `users/{uid}/settings/main`, `users/{uid}/assets/{assetId}`, `users/{uid}/liabilities/{liabilityId}`, and `users/{uid}/snapshots/{snapshotId}` throughout.
+- Domain names match the approved spec: `Asset`, `Liability`, `Snapshot`, `SnapshotItem`, `SnapshotLiabilityItem`, and `Settings`.
