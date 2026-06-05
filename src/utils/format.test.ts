@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatNumberInput, toNumber } from "./format";
+import { formatNumberInput, formatRatioPercent, toNumber } from "./format";
 
 describe("number input formatting", () => {
   it("formats blurred money inputs with commas and without unnecessary .00", () => {
@@ -12,5 +12,12 @@ describe("number input formatting", () => {
     expect(toNumber("27,828.58")).toBe(27828.58);
     expect(toNumber("292,509")).toBe(292509);
     expect(toNumber("")).toBe(0);
+  });
+});
+
+describe("percentage formatting", () => {
+  it("formats portfolio allocation ratios as percentages", () => {
+    expect(formatRatioPercent(0.1)).toBe("10.00%");
+    expect(formatRatioPercent(0.0036)).toBe("0.36%");
   });
 });

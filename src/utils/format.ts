@@ -10,6 +10,10 @@ export function formatPercent(value: number) {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }
 
+export function formatRatioPercent(value: number) {
+  return `${(value * 100).toFixed(2)}%`;
+}
+
 export function formatDateLabel(value: string) {
   return new Intl.DateTimeFormat("th-TH", {
     month: "short",

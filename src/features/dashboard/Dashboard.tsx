@@ -1,7 +1,7 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { calculateSnapshotSummary } from "../../domain/calculations";
 import type { Asset, Liability, Settings, Snapshot } from "../../domain/types";
-import { formatCurrency, formatPercent, formatDateLabel } from "../../utils/format";
+import { formatCurrency, formatDateLabel, formatPercent, formatRatioPercent } from "../../utils/format";
 
 type DashboardProps = {
   assets: Asset[];
@@ -116,7 +116,7 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
                       style={{ background: allocationColors[index % allocationColors.length] }}
                     />
                     <span>{item.name}</span>
-                    <strong>{formatPercent(percent)}</strong>
+                    <strong>{formatRatioPercent(percent)}</strong>
                   </div>
                 );
               })}
