@@ -7,7 +7,9 @@
   -webkit-font-smoothing: antialiased;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -427,13 +429,32 @@ label {
 input,
 select {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 46px;
   border: 1px solid #ccd7ce;
   border-radius: 8px;
   background: #ffffff;
   color: #121b15;
-  padding: 0 12px;
+  padding: 0 14px;
   outline: none;
+}
+
+input[type="date"] {
+  display: block;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: left;
+}
+
+input[type="date"]::-webkit-date-and-time-value {
+  min-height: 1.4em;
+  text-align: left;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-right: 0;
 }
 
 input:focus,
