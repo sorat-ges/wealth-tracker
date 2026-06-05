@@ -1,8 +1,8 @@
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { MoneyInput } from "../../components/MoneyInput";
-import { getAssetValue, groupAssetsByType } from "../../domain/assets";
+import { createUpdatedAsset, getAssetCostBasis, getAssetValue, groupAssetsByType } from "../../domain/assets";
 import type { Asset, AssetType, Liability, LiabilityType, Settings } from "../../domain/types";
 import { formatCurrency, toNumber } from "../../utils/format";
 
@@ -50,8 +50,17 @@ export function AssetsScreen({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedAssetType, setSelectedAssetType] = useState<AssetType>("cash");
+  const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
+  const [editingAssetType, setEditingAssetType] = useState<AssetType>("cash");
   const selectedAssetIsMarket = marketAssetTypes.has(selectedAssetType);
+  const editingAssetIsMarket = marketAssetTypes.has(editingAssetType);
   const assetGroups = groupAssetsByType(assets);
+  const editingAsset = assets.find((asset) => asset.id === editingAssetId);
+
+  function closeAssetEditor() {
+    setEditingAssetId(null);
+    setEditingAssetType("cash");
+  }
 
   async function handleAssetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,6 +124,39 @@ export function AssetsScreen({
       await onSaveLiability(liability);
       formElement.reset();
       setMessage(existingLiability ? "อัปเดตหนี้สินเดิมแล้ว" : "บันทึกหนี้สินแล้ว");
+    } catch (saveError) {
+      setError(getSaveErrorMessage(saveError));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleAssetEditSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingAsset) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+    const form = new FormData(event.currentTarget);
+    const type = form.get("type") as AssetType;
+    const nextAsset = createUpdatedAsset(
+      editingAsset,
+      {
+        name: String(form.get("name") ?? editingAsset.name).trim(),
+        type,
+        costBasis: marketAssetTypes.has(type) ? toNumber(form.get("costBasis")) : undefined,
+        currentValue: toNumber(form.get("currentValue"))
+      },
+      new Date().toISOString(),
+    );
+
+    try {
+      await onSaveAsset(nextAsset);
+      closeAssetEditor();
+      setMessage("แก้ไขสินทรัพย์แล้ว");
     } catch (saveError) {
       setError(getSaveErrorMessage(saveError));
     } finally {
@@ -224,13 +266,24 @@ export function AssetsScreen({
           </div>
           <div className="list-stack">
             {group.assets.map((asset) => (
-              <div className="list-row" key={asset.id}>
+              <div className={editingAssetId === asset.id ? "list-row list-row-editing" : "list-row"} key={asset.id}>
                 <div>
                   <strong>{asset.name}</strong>
                   <span>{assetTypeLabels[asset.type]}</span>
                 </div>
                 <div className="row-actions">
                   <span>{formatCurrency(getAssetValue(asset), settings.mainCurrency)}</span>
+                  <button
+                    className="icon-button"
+                    type="button"
+                    onClick={() => {
+                      setEditingAssetId(asset.id);
+                      setEditingAssetType(asset.type);
+                    }}
+                    aria-label={`แก้ไข ${asset.name}`}
+                  >
+                    <Pencil size={16} />
+                  </button>
                   <button
                     className="icon-button danger-button"
                     type="button"
@@ -240,6 +293,47 @@ export function AssetsScreen({
                     <Trash2 size={16} />
                   </button>
                 </div>
+                {editingAssetId === asset.id ? (
+                  <form className="edit-form" onSubmit={handleAssetEditSubmit}>
+                    <div className="section-heading">
+                      <h2>แก้ไขสินทรัพย์</h2>
+                      <button className="icon-button" type="button" onClick={closeAssetEditor} aria-label="ปิดฟอร์มแก้ไข">
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <label>
+                      ชื่อ
+                      <input name="name" defaultValue={asset.name} required />
+                    </label>
+                    <label>
+                      ประเภท
+                      <select
+                        name="type"
+                        value={editingAssetType}
+                        onChange={(event) => setEditingAssetType(event.currentTarget.value as AssetType)}
+                      >
+                        {assetTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {editingAssetIsMarket ? (
+                      <label>
+                        เงินลงทุนรวม
+                        <MoneyInput name="costBasis" min={0} defaultValue={getAssetCostBasis(asset)} required />
+                      </label>
+                    ) : null}
+                    <label>
+                      มูลค่าปัจจุบันรวม
+                      <MoneyInput name="currentValue" min={0} defaultValue={getAssetValue(asset)} required />
+                    </label>
+                    <button className="primary-button" type="submit" disabled={saving}>
+                      {saving ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
+                    </button>
+                  </form>
+                ) : null}
               </div>
             ))}
           </div>

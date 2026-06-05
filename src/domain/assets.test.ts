@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupAssetsByType } from "./assets";
+import { createUpdatedAsset, groupAssetsByType } from "./assets";
 import type { Asset } from "./types";
 
 const timestamp = "2026-06-05T00:00:00.000Z";
@@ -49,5 +49,37 @@ describe("asset helpers", () => {
       ["cash", ["cash"]],
       ["fund", ["fund-large", "fund-small"]]
     ]);
+  });
+
+  it("creates an updated asset without changing its id or created timestamp", () => {
+    const asset: Asset = {
+      id: "gold",
+      name: "Gold",
+      type: "gold",
+      costBasis: 12000,
+      currentValue: 12800,
+      active: true,
+      createdAt: timestamp,
+      updatedAt: timestamp
+    };
+
+    expect(
+      createUpdatedAsset(
+        asset,
+        {
+          name: "Gold DCA",
+          type: "gold",
+          costBasis: 14000,
+          currentValue: 15100
+        },
+        "2026-06-06T00:00:00.000Z",
+      ),
+    ).toEqual({
+      ...asset,
+      name: "Gold DCA",
+      costBasis: 14000,
+      currentValue: 15100,
+      updatedAt: "2026-06-06T00:00:00.000Z"
+    });
   });
 });

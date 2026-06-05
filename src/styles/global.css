@@ -373,6 +373,11 @@ label small {
   border-bottom: 1px solid #edf1ec;
 }
 
+.list-row-editing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .list-row:last-child {
   border-bottom: 0;
 }
@@ -388,6 +393,17 @@ label small {
   justify-content: flex-end;
   gap: 8px;
   text-align: right;
+}
+
+.edit-form {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 14px;
+  border: 1px solid #dce5db;
+  border-radius: 8px;
+  background: #fbfdf9;
 }
 
 .empty-text {
