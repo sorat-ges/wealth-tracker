@@ -2,6 +2,7 @@ import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { MoneyInput } from "../../components/MoneyInput";
+import { getAssetValue, groupAssetsByType } from "../../domain/assets";
 import type { Asset, AssetType, Liability, LiabilityType, Settings } from "../../domain/types";
 import { formatCurrency, toNumber } from "../../utils/format";
 
@@ -50,6 +51,7 @@ export function AssetsScreen({
   const [saving, setSaving] = useState(false);
   const [selectedAssetType, setSelectedAssetType] = useState<AssetType>("cash");
   const selectedAssetIsMarket = marketAssetTypes.has(selectedAssetType);
+  const assetGroups = groupAssetsByType(assets);
 
   async function handleAssetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -204,29 +206,45 @@ export function AssetsScreen({
         </form>
       </article>
 
-      <article className="panel">
-        <div className="section-heading">
-          <h2>สินทรัพย์ลงทุน</h2>
-          <span>{assets.length}</span>
-        </div>
-        <div className="list-stack">
-          {assets.map((asset) => (
-            <div className="list-row" key={asset.id}>
-              <div>
-                <strong>{asset.name}</strong>
-                <span>{assetTypeLabels[asset.type]}</span>
+      {!assetGroups.length ? (
+        <article className="panel">
+          <div className="section-heading">
+            <h2>สินทรัพย์ลงทุน</h2>
+            <span>0</span>
+          </div>
+          <p className="empty-text">ยังไม่มีสินทรัพย์</p>
+        </article>
+      ) : null}
+
+      {assetGroups.map((group) => (
+        <article className="panel" key={group.type}>
+          <div className="section-heading">
+            <h2>{assetTypeLabels[group.type]}</h2>
+            <span>{group.assets.length} รายการ</span>
+          </div>
+          <div className="list-stack">
+            {group.assets.map((asset) => (
+              <div className="list-row" key={asset.id}>
+                <div>
+                  <strong>{asset.name}</strong>
+                  <span>{assetTypeLabels[asset.type]}</span>
+                </div>
+                <div className="row-actions">
+                  <span>{formatCurrency(getAssetValue(asset), settings.mainCurrency)}</span>
+                  <button
+                    className="icon-button danger-button"
+                    type="button"
+                    onClick={() => onDeleteAsset(asset.id)}
+                    aria-label={`ลบ ${asset.name}`}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
-              <div className="row-actions">
-                <span>{formatCurrency(getAssetValue(asset), settings.mainCurrency)}</span>
-                <button className="icon-button danger-button" type="button" onClick={() => onDeleteAsset(asset.id)} aria-label={`ลบ ${asset.name}`}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
-          {!assets.length ? <p className="empty-text">ยังไม่มีสินทรัพย์</p> : null}
-        </div>
-      </article>
+            ))}
+          </div>
+        </article>
+      ))}
 
       <article className="panel">
         <div className="section-heading">
@@ -270,8 +288,4 @@ function getSaveErrorMessage(error: unknown) {
 
 function normalizeName(name: string) {
   return name.trim().replace(/\s+/g, " ").toLocaleLowerCase("th-TH");
-}
-
-function getAssetValue(asset: Asset) {
-  return asset.currentValue ?? (asset.quantity ?? 0) * (asset.currentPrice ?? 0);
 }
