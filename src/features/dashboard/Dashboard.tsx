@@ -27,15 +27,21 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
       name: assets.find((asset) => asset.id === item.assetId)?.name ?? "สินทรัพย์",
       value: item.value
     }));
+  const allocationTotal = allocation.reduce((total, item) => total + item.value, 0);
 
   return (
     <section className="screen-stack">
       <div className="summary-hero">
-        <p className="screen-kicker">ความมั่งคั่งลงทุน</p>
-        <h1>{formatCurrency(summary.investableWealth, settings.mainCurrency)}</h1>
+        <div>
+          <p className="screen-kicker">Investable wealth</p>
+          <h1>{formatCurrency(summary.investableWealth, settings.mainCurrency)}</h1>
+        </div>
         <div className={change >= 0 ? "metric-change gain" : "metric-change loss"}>
-          {change >= 0 ? "+" : ""}
-          {formatCurrency(change, settings.mainCurrency)} จากค่าที่บันทึกล่าสุด
+          <span>{change >= 0 ? "เพิ่มขึ้น" : "ลดลง"}</span>
+          <strong>
+            {change >= 0 ? "+" : ""}
+            {formatCurrency(change, settings.mainCurrency)}
+          </strong>
         </div>
       </div>
 
@@ -53,7 +59,9 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
           <strong className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
             {formatCurrency(summary.totalUnrealizedPL, settings.mainCurrency)}
           </strong>
-          <small>{formatPercent(summary.totalUnrealizedPLPercent)}</small>
+          <small className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
+            {formatPercent(summary.totalUnrealizedPLPercent)}
+          </small>
         </article>
       </div>
 
@@ -67,17 +75,52 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
           <span>{allocation.length} รายการ</span>
         </div>
         {allocation.length ? (
-          <div className="chart-box">
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie data={allocation} dataKey="value" nameKey="name" innerRadius={48} outerRadius={76} paddingAngle={3}>
-                  {allocation.map((entry, index) => (
-                    <Cell key={entry.name} fill={allocationColors[index % allocationColors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => formatCurrency(Number(value), settings.mainCurrency)} />
-              </PieChart>
-            </ResponsiveContainer>
+          <div className="allocation-layout">
+            <div className="chart-box" aria-hidden="true">
+              <ResponsiveContainer width="100%" height={140}>
+                <PieChart>
+                  <Pie
+                    data={allocation}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={42}
+                    outerRadius={60}
+                    paddingAngle={2}
+                    strokeWidth={0}
+                  >
+                    {allocation.map((entry, index) => (
+                      <Cell key={entry.name} fill={allocationColors[index % allocationColors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    formatter={(value) => formatCurrency(Number(value), settings.mainCurrency)}
+                    contentStyle={{
+                      border: "1px solid #dce5db",
+                      borderRadius: 8,
+                      boxShadow: "0 12px 28px rgba(23, 32, 25, 0.14)",
+                      fontSize: 12,
+                      fontWeight: 800
+                    }}
+                    wrapperStyle={{ outline: "none" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="allocation-list">
+              {allocation.map((item, index) => {
+                const percent = allocationTotal ? item.value / allocationTotal : 0;
+                return (
+                  <div className="allocation-row" key={item.name}>
+                    <span
+                      className="allocation-dot"
+                      style={{ background: allocationColors[index % allocationColors.length] }}
+                    />
+                    <span>{item.name}</span>
+                    <strong>{formatPercent(percent)}</strong>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : (
           <p className="empty-text">เพิ่มสินทรัพย์เพื่อดูสัดส่วนพอร์ต</p>

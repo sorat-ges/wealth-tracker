@@ -32,6 +32,7 @@ function SignedInApp({ user }: { user: User }) {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [settings, setSettings] = useState<Settings>({ mainCurrency: "THB" });
   const uid = user.uid;
+  const displayName = user.displayName?.split(" ")[0] ?? user.email?.split("@")[0] ?? "ผู้ใช้";
 
   useEffect(() => {
     let cancelled = false;
@@ -75,8 +76,8 @@ function SignedInApp({ user }: { user: User }) {
     <main className="app-shell app-with-tabs">
       <header className="top-bar">
         <div>
-          <p className="screen-kicker">เข้าสู่ระบบแล้ว</p>
-          <strong>{user.displayName ?? user.email}</strong>
+          <p className="screen-kicker">Wealth Tracker</p>
+          <strong>สวัสดี, {displayName}</strong>
         </div>
       </header>
 
