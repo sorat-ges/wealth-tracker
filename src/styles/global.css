@@ -393,6 +393,51 @@ label small {
   text-align: right;
 }
 
+.snapshot-row {
+  display: grid;
+  align-items: start;
+  gap: 11px;
+  padding: 14px 0;
+}
+
+.snapshot-main {
+  min-width: 0;
+}
+
+.snapshot-main strong {
+  color: #121b15;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.snapshot-main span {
+  line-height: 1.45;
+}
+
+.snapshot-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 44px 44px;
+  width: 100%;
+  column-gap: 12px;
+  row-gap: 8px;
+  text-align: left;
+}
+
+.snapshot-actions .icon-button {
+  width: 44px;
+  height: 44px;
+}
+
+.snapshot-value {
+  align-self: center;
+  justify-self: start;
+  color: #637067 !important;
+  font-size: 0.92rem !important;
+  font-weight: 900 !important;
+  padding-right: 6px;
+  white-space: nowrap;
+}
+
 .edit-form {
   display: grid;
   grid-column: 1 / -1;
@@ -402,6 +447,30 @@ label small {
   border: 1px solid #dce5db;
   border-radius: 8px;
   background: #fbfdf9;
+}
+
+@media (min-width: 620px) {
+  .snapshot-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .snapshot-actions {
+    grid-template-columns: auto 40px 40px;
+    width: auto;
+    column-gap: 14px;
+    text-align: right;
+  }
+
+  .snapshot-actions .icon-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .snapshot-value {
+    justify-self: end;
+    padding-right: 2px;
+  }
 }
 
 .empty-text {

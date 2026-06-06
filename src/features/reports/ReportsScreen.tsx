@@ -199,16 +199,16 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
             .slice()
             .reverse()
             .map((snapshot) => (
-              <div className="list-row" key={snapshot.id}>
-                <div>
+              <div className="list-row snapshot-row" key={snapshot.id}>
+                <div className="snapshot-main">
                   <strong>{formatDateLabel(snapshot.date)}</strong>
                   <span>
                     สินทรัพย์ {formatCurrency(snapshot.totalInvestableAssets, settings.mainCurrency)} · หนี้{" "}
                     {formatCurrency(snapshot.totalLiabilities, settings.mainCurrency)}
                   </span>
                 </div>
-                <div className="row-actions">
-                  <span>{formatCurrency(snapshot.investableWealth, settings.mainCurrency)}</span>
+                <div className="row-actions snapshot-actions">
+                  <span className="snapshot-value">{formatCurrency(snapshot.investableWealth, settings.mainCurrency)}</span>
                   <button
                     className="icon-button"
                     type="button"
