@@ -1,4 +1,5 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Wallet, CreditCard, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { sortAllocationByValue } from "../../domain/allocation";
 import { getTotalDepositAnnualReturn } from "../../domain/assets";
 import { calculateSnapshotSummary } from "../../domain/calculations";
@@ -53,24 +54,42 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
 
       <div className="metric-grid">
         <article className="metric-card">
-          <span>สินทรัพย์ลงทุน</span>
+          <div className="metric-header">
+            <span>สินทรัพย์ลงทุน</span>
+            <Wallet size={16} className="metric-icon" />
+          </div>
           <strong>{formatCurrency(summary.totalInvestableAssets, settings.mainCurrency)}</strong>
         </article>
         <article className="metric-card">
-          <span>หนี้สิน</span>
+          <div className="metric-header">
+            <span>หนี้สิน</span>
+            <CreditCard size={16} className="metric-icon" />
+          </div>
           <strong>{formatCurrency(summary.totalLiabilities, settings.mainCurrency)}</strong>
         </article>
         <article className="metric-card">
-          <span>กำไร/ขาดทุนยังไม่รับรู้</span>
-          <strong className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
-            {formatCurrency(summary.totalUnrealizedPL, settings.mainCurrency)}
-          </strong>
-          <small className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
-            {formatPercent(summary.totalUnrealizedPLPercent)}
-          </small>
+          <div className="metric-header">
+            <span>กำไร/ขาดทุนยังไม่รับรู้</span>
+            {summary.totalUnrealizedPL >= 0 ? (
+              <TrendingUp size={16} className="metric-icon gain" />
+            ) : (
+              <TrendingDown size={16} className="metric-icon loss" />
+            )}
+          </div>
+          <div className="metric-pl-value">
+            <strong className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
+              {formatCurrency(summary.totalUnrealizedPL, settings.mainCurrency)}
+            </strong>
+            <small className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
+              {formatPercent(summary.totalUnrealizedPLPercent)}
+            </small>
+          </div>
         </article>
         <article className="metric-card">
-          <span>ผลตอบแทนเงินฝากรายปี</span>
+          <div className="metric-header">
+            <span>ผลตอบแทนเงินฝากรายปี</span>
+            <PiggyBank size={16} className="metric-icon" />
+          </div>
           <strong>{formatCurrency(totalDepositAnnualReturn, settings.mainCurrency)}</strong>
         </article>
       </div>

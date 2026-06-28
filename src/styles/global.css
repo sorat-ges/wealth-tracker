@@ -118,21 +118,32 @@ p {
   align-content: space-between;
   gap: 18px;
   overflow: hidden;
-  padding: 20px;
+  padding: 24px;
   border: 0;
-  border-radius: 8px;
-  background: linear-gradient(145deg, #121b15 0%, #173722 58%, #17633a 100%);
-  box-shadow: 0 18px 34px rgba(23, 32, 25, 0.18);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0e1611 0%, #153b23 60%, #1a7140 100%);
+  box-shadow: 0 20px 40px rgba(23, 32, 25, 0.16);
   position: relative;
 }
 
 .summary-hero::after {
   position: absolute;
-  right: -48px;
-  bottom: -68px;
-  width: 168px;
-  height: 168px;
-  border: 24px solid rgba(255, 255, 255, 0.1);
+  right: -32px;
+  bottom: -48px;
+  width: 148px;
+  height: 148px;
+  border: 18px solid rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  content: "";
+}
+
+.summary-hero::before {
+  position: absolute;
+  right: 24px;
+  top: -24px;
+  width: 96px;
+  height: 96px;
+  border: 12px solid rgba(255, 255, 255, 0.03);
   border-radius: 999px;
   content: "";
 }
@@ -143,12 +154,15 @@ p {
   color: #ffffff;
   font-size: clamp(2.25rem, 12vw, 3.15rem);
   line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .summary-hero .screen-kicker {
   position: relative;
   z-index: 1;
-  color: rgba(255, 255, 255, 0.68);
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.05em;
 }
 
 .metric-change,
@@ -163,24 +177,28 @@ p {
   display: inline-grid;
   width: fit-content;
   gap: 2px;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #ffffff;
 }
 
 .metric-change span {
-  color: rgba(255, 255, 255, 0.68);
-  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .metric-change.gain strong {
-  color: #bff2ca;
+  color: #9bfba9;
 }
 
 .metric-change.loss strong {
-  color: #ffd6d1;
+  color: #ffb8b0;
 }
 
 .gain {
@@ -200,17 +218,50 @@ p {
 .metric-card,
 .panel,
 .summary-strip {
-  border: 1px solid #dce5db;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 22px rgba(38, 56, 42, 0.05);
+  border: 1px solid #e1e9e0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 30px rgba(18, 27, 21, 0.035);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .metric-card {
   display: grid;
   gap: 7px;
-  min-height: 84px;
-  padding: 13px;
+  min-height: 94px;
+  padding: 14px;
+}
+
+.metric-card:active {
+  transform: scale(0.975);
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.metric-icon {
+  color: #8fa093;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.metric-card:hover .metric-icon {
+  color: #17633a;
+}
+
+.metric-card:hover .metric-icon.loss {
+  color: #b42318;
+}
+
+.metric-pl-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .metric-card span,
@@ -224,8 +275,9 @@ label small {
 
 .metric-card strong {
   color: #121b15;
-  font-size: 1.08rem;
+  font-size: 1.15rem;
   line-height: 1.15;
+  font-weight: 800;
 }
 
 .panel {
@@ -445,7 +497,7 @@ label small {
   margin-top: 8px;
   padding: 14px;
   border: 1px solid #dce5db;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fbfdf9;
 }
 
@@ -498,7 +550,7 @@ select {
   min-width: 0;
   min-height: 46px;
   border: 1px solid #ccd7ce;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #ffffff;
   color: #121b15;
   padding: 0 14px;
@@ -566,7 +618,7 @@ select:focus {
 .primary-button,
 .secondary-button,
 .icon-button {
-  border-radius: 8px;
+  border-radius: 10px;
   font-weight: 850;
 }
 
