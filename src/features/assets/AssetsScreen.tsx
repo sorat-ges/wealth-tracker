@@ -10,6 +10,7 @@ import {
   getAssetValue,
   groupAssetsByType
 } from "../../domain/assets";
+import { createUpdatedLiability } from "../../domain/liabilities";
 import type { Asset, AssetType, Liability, LiabilityType, Settings } from "../../domain/types";
 import { formatCurrency, toNumber } from "../../utils/format";
 
@@ -59,14 +60,20 @@ export function AssetsScreen({
   const [selectedAssetType, setSelectedAssetType] = useState<AssetType>("cash");
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
   const [editingAssetType, setEditingAssetType] = useState<AssetType>("cash");
+  const [editingLiabilityId, setEditingLiabilityId] = useState<string | null>(null);
   const selectedAssetIsMarket = marketAssetTypes.has(selectedAssetType);
   const editingAssetIsMarket = marketAssetTypes.has(editingAssetType);
   const assetGroups = groupAssetsByType(assets);
   const editingAsset = assets.find((asset) => asset.id === editingAssetId);
+  const editingLiability = liabilities.find((liability) => liability.id === editingLiabilityId);
 
   function closeAssetEditor() {
     setEditingAssetId(null);
     setEditingAssetType("cash");
+  }
+
+  function closeLiabilityEditor() {
+    setEditingLiabilityId(null);
   }
 
   async function handleAssetSubmit(event: FormEvent<HTMLFormElement>) {
@@ -166,6 +173,37 @@ export function AssetsScreen({
       await onSaveAsset(nextAsset);
       closeAssetEditor();
       setMessage("แก้ไขสินทรัพย์แล้ว");
+    } catch (saveError) {
+      setError(getSaveErrorMessage(saveError));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleLiabilityEditSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingLiability) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+    const form = new FormData(event.currentTarget);
+    const nextLiability = createUpdatedLiability(
+      editingLiability,
+      {
+        name: String(form.get("name") ?? editingLiability.name).trim(),
+        type: form.get("type") as LiabilityType,
+        currentBalance: toNumber(form.get("currentBalance"))
+      },
+      new Date().toISOString(),
+    );
+
+    try {
+      await onSaveLiability(nextLiability);
+      closeLiabilityEditor();
+      setMessage("แก้ไขหนี้สินแล้ว");
     } catch (saveError) {
       setError(getSaveErrorMessage(saveError));
     } finally {
@@ -376,13 +414,23 @@ export function AssetsScreen({
         </div>
         <div className="list-stack">
           {liabilities.map((liability) => (
-            <div className="list-row" key={liability.id}>
+            <div className={editingLiabilityId === liability.id ? "list-row list-row-editing" : "list-row"} key={liability.id}>
               <div>
                 <strong>{liability.name}</strong>
                 <span>{liabilityTypeLabels[liability.type]}</span>
               </div>
               <div className="row-actions">
                 <span>{formatCurrency(liability.currentBalance, settings.mainCurrency)}</span>
+                <button
+                  className="icon-button"
+                  type="button"
+                  onClick={() => {
+                    setEditingLiabilityId(liability.id);
+                  }}
+                  aria-label={`แก้ไข ${liability.name}`}
+                >
+                  <Pencil size={16} />
+                </button>
                 <button
                   className="icon-button danger-button"
                   type="button"
@@ -392,6 +440,37 @@ export function AssetsScreen({
                   <Trash2 size={16} />
                 </button>
               </div>
+              {editingLiabilityId === liability.id ? (
+                <form className="edit-form" onSubmit={handleLiabilityEditSubmit}>
+                  <div className="section-heading">
+                    <h2>แก้ไขหนี้สิน</h2>
+                    <button className="icon-button" type="button" onClick={closeLiabilityEditor} aria-label="ปิดฟอร์มแก้ไข">
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <label>
+                    ชื่อ
+                    <input name="name" defaultValue={liability.name} required />
+                  </label>
+                  <label>
+                    ประเภท
+                    <select name="type" defaultValue={liability.type}>
+                      {liabilityTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    ยอดคงเหลือปัจจุบัน
+                    <MoneyInput name="currentBalance" min={0} defaultValue={liability.currentBalance} required />
+                  </label>
+                  <button className="primary-button" type="submit" disabled={saving}>
+                    {saving ? "กำลังบันทึก..." : "บันทึกการแก้ไข"}
+                  </button>
+                </form>
+              ) : null}
             </div>
           ))}
           {!liabilities.length ? <p className="empty-text">ยังไม่มีหนี้สิน เพิ่มหนี้รถยนต์ได้ที่นี่</p> : null}
