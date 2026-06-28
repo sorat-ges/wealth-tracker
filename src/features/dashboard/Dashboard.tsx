@@ -14,7 +14,20 @@ type DashboardProps = {
   onUpdate: () => void;
 };
 
-const allocationColors = ["#17633a", "#7f6a2f", "#3867a6", "#8b3f62", "#58635d", "#a05b2b"];
+const allocationColors = [
+  "#17633a", // Emerald Green
+  "#3867a6", // Muted Blue
+  "#7f6a2f", // Antique Gold
+  "#8b3f62", // Plum/Rose
+  "#288280", // Dark Teal
+  "#a05b2b", // Copper/Rust
+  "#524b87", // Soft Indigo
+  "#58635d", // Slate Gray
+  "#964545", // Crimson/Terracotta
+  "#3c7042", // Forest Green
+  "#6b703c", // Olive Green
+  "#634a36"  // Dark Bronze
+];
 
 export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }: DashboardProps) {
   const summary = calculateSnapshotSummary(assets, liabilities);
@@ -24,7 +37,8 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
   const latestNonToday = [...snapshots].reverse().find((s) => s.date !== today);
   const comparisonBase = latestNonToday ? latestNonToday.investableWealth : (latest?.investableWealth ?? 0);
   const change = summary.investableWealth - comparisonBase;
-  const allocation = sortAllocationByValue(
+
+  const rawAllocation = sortAllocationByValue(
     assets
       .filter((asset) => asset.active)
       .map((asset) => calculateSnapshotSummary([asset]).items[0])
@@ -34,7 +48,43 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
         value: item.value
       })),
   );
-  const allocationTotal = allocation.reduce((total, item) => total + item.value, 0);
+  const allocationTotal = rawAllocation.reduce((total, item) => total + item.value, 0);
+
+  // Group assets with less than 3% allocation as "อื่น ๆ" in the chart
+  const largeAssets: typeof rawAllocation = [];
+  let smallAssetsSum = 0;
+
+  rawAllocation.forEach((item) => {
+    const percentage = allocationTotal > 0 ? item.value / allocationTotal : 0;
+    if (percentage >= 0.03) {
+      largeAssets.push(item);
+    } else {
+      smallAssetsSum += item.value;
+    }
+  });
+
+  const chartAllocation = [...largeAssets];
+  if (smallAssetsSum > 0) {
+    chartAllocation.push({
+      name: "อื่น ๆ",
+      value: smallAssetsSum
+    });
+  }
+
+  // Map each original asset item to a color index
+  const allocation = rawAllocation.map((item) => {
+    const largeIndex = largeAssets.findIndex((la) => la.name === item.name);
+    if (largeIndex !== -1) {
+      return {
+        ...item,
+        colorIndex: largeIndex
+      };
+    }
+    return {
+      ...item,
+      colorIndex: largeAssets.length
+    };
+  });
 
   return (
     <section className="screen-stack">
@@ -105,11 +155,11 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
         </div>
         {allocation.length ? (
           <div className="allocation-layout">
-            <div className="chart-box" aria-hidden="true">
+            <div className="chart-box" aria-hidden="true" style={{ position: "relative" }}>
               <ResponsiveContainer width="100%" height={140}>
                 <PieChart>
                   <Pie
-                    data={allocation}
+                    data={chartAllocation}
                     dataKey="value"
                     nameKey="name"
                     innerRadius={42}
@@ -117,7 +167,7 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
                     paddingAngle={2}
                     strokeWidth={0}
                   >
-                    {allocation.map((entry, index) => (
+                    {chartAllocation.map((entry, index) => (
                       <Cell key={entry.name} fill={allocationColors[index % allocationColors.length]} />
                     ))}
                   </Pie>
@@ -134,15 +184,19 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
                   />
                 </PieChart>
               </ResponsiveContainer>
+              <div className="chart-center-label">
+                <span>สินทรัพย์รวม</span>
+                <strong>{formatCurrency(allocationTotal, settings.mainCurrency)}</strong>
+              </div>
             </div>
             <div className="allocation-list">
-              {allocation.map((item, index) => {
+              {allocation.map((item) => {
                 const percent = allocationTotal ? item.value / allocationTotal : 0;
                 return (
                   <div className="allocation-row" key={item.name}>
                     <span
                       className="allocation-dot"
-                      style={{ background: allocationColors[index % allocationColors.length] }}
+                      style={{ background: allocationColors[item.colorIndex % allocationColors.length] }}
                     />
                     <span>{item.name}</span>
                     <strong>{formatRatioPercent(percent)}</strong>
