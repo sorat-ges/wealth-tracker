@@ -71,7 +71,12 @@ p {
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
 
-.center-state,
+.center-state {
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
 .auth-screen {
   display: grid;
   align-items: center;
