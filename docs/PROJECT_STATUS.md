@@ -1,6 +1,6 @@
 # Wealth Tracker Project Status
 
-Last updated: 2026-06-05
+Last updated: 2026-06-28
 
 This document is a handoff note for the next AI agent session. It summarizes the current product, architecture, data model, deployment setup, and implementation decisions.
 
@@ -217,6 +217,10 @@ This expected annual return is reported separately. It is not included in unreal
 
 - `updateSnapshotTotals()` edits snapshot totals without touching captured asset/liability rows.
 
+`src/domain/liabilities.ts`
+
+- `createUpdatedLiability(liability, values, now)`: updates current liability while preserving `id` and `createdAt`.
+
 ## App Structure
 
 Root app:
@@ -279,18 +283,16 @@ src/features/dashboard/Dashboard.tsx
 
 Shows:
 
-- Investable wealth hero.
-- Total investable assets.
-- Total liabilities.
-- Total expected annual deposit return.
-- Total unrealized P/L and percent.
-- Asset allocation donut and list.
-- Recent snapshots.
+- Investable wealth hero with a premium background gradient and a glassmorphism change badge compared with the last non-today snapshot.
+- Total investable assets, liabilities, unrealized P/L, and expected annual return, each featuring high-quality Lucide icons.
+- Asset allocation donut chart optimized with a centered total asset value label, an expanded 12-color palette, and tail-grouping of small assets (< 3%) into "อื่น ๆ" to maintain chart legibility.
+- Recent snapshots list.
 
 Recent fixes:
 
 - Allocation list is sorted by value descending.
 - Allocation percentages use ratio formatting correctly, e.g. `0.10` becomes `10.00%`, not `0.10%`.
+- Fixed the wealth change calculation to compare with the previous snapshot once today's snapshot is saved.
 
 ### Assets Screen
 
@@ -309,6 +311,8 @@ Supports:
 - Edit asset from list using pencil icon.
 - Delete asset using trash icon.
 - Edit asset master only. Existing snapshots are not modified.
+- Edit liability from list using pencil icon and inline form, mirroring the asset editing capability.
+- Delete liability using trash icon.
 
 Current asset input behavior:
 
@@ -434,17 +438,17 @@ Important recent CSS fixes:
 Last known pushed state:
 
 ```text
-origin/main is pushed through e2125f5 style: refine dropdown controls
+origin/main is pushed through cb2a889 style: optimize asset allocation donut chart with grouping and center label
 ```
 
 Recent important commits:
 
 ```text
-2304366 fix: contain mobile date inputs
-e2125f5 style: refine dropdown controls
-4675d6c style: add polished pwa icons
-fbff0ca feat: edit assets from asset list
-46aa6e7 feat: group assets by type
+cb2a889 style: optimize asset allocation donut chart with grouping and center label
+02a3a5f style: revamp dashboard UI with premium aesthetics and lucide icons
+07fe96d fix: resolve wealth change comparison bug when today's snapshot exists
+4563e9d feat: add capability to edit liabilities from assets screen
+cdd0b52 style: refine snapshot row layout
 ```
 
 Always run:
@@ -468,8 +472,8 @@ npm run build
 Current baseline at last documentation update:
 
 ```text
-7 test files passed
-15 tests passed
+9 test files passed
+19 tests passed
 production build passed
 ```
 
@@ -488,7 +492,6 @@ Vite still warns that some chunks are larger than 500 kB. This is currently know
 
 ## Good Next Feature Candidates
 
-- Edit liabilities from the liability list, mirroring asset edit behavior.
 - Add confirm dialogs for asset/liability deletes.
 - Add total per asset group in Assets screen headers.
 - Add better mobile visual QA with Browser/Playwright if available.
