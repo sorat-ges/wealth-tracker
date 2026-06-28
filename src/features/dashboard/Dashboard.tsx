@@ -1,4 +1,3 @@
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Wallet, CreditCard, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 import { sortAllocationByValue } from "../../domain/allocation";
 import { getTotalDepositAnnualReturn } from "../../domain/assets";
@@ -38,7 +37,7 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
   const comparisonBase = latestNonToday ? latestNonToday.investableWealth : (latest?.investableWealth ?? 0);
   const change = summary.investableWealth - comparisonBase;
 
-  const rawAllocation = sortAllocationByValue(
+  const allocation = sortAllocationByValue(
     assets
       .filter((asset) => asset.active)
       .map((asset) => calculateSnapshotSummary([asset]).items[0])
@@ -48,43 +47,7 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
         value: item.value
       })),
   );
-  const allocationTotal = rawAllocation.reduce((total, item) => total + item.value, 0);
-
-  // Group assets with less than 3% allocation as "อื่น ๆ" in the chart
-  const largeAssets: typeof rawAllocation = [];
-  let smallAssetsSum = 0;
-
-  rawAllocation.forEach((item) => {
-    const percentage = allocationTotal > 0 ? item.value / allocationTotal : 0;
-    if (percentage >= 0.03) {
-      largeAssets.push(item);
-    } else {
-      smallAssetsSum += item.value;
-    }
-  });
-
-  const chartAllocation = [...largeAssets];
-  if (smallAssetsSum > 0) {
-    chartAllocation.push({
-      name: "อื่น ๆ",
-      value: smallAssetsSum
-    });
-  }
-
-  // Map each original asset item to a color index
-  const allocation = rawAllocation.map((item) => {
-    const largeIndex = largeAssets.findIndex((la) => la.name === item.name);
-    if (largeIndex !== -1) {
-      return {
-        ...item,
-        colorIndex: largeIndex
-      };
-    }
-    return {
-      ...item,
-      colorIndex: largeAssets.length
-    };
-  });
+  const allocationTotal = allocation.reduce((total, item) => total + item.value, 0);
 
   return (
     <section className="screen-stack">
@@ -154,49 +117,32 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
           <span>{allocation.length} รายการ</span>
         </div>
         {allocation.length ? (
-          <div className="allocation-layout">
-            <div className="chart-box" aria-hidden="true" style={{ position: "relative" }}>
-              <ResponsiveContainer width="100%" height={140}>
-                <PieChart>
-                  <Pie
-                    data={chartAllocation}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={42}
-                    outerRadius={60}
-                    paddingAngle={2}
-                    strokeWidth={0}
-                  >
-                    {chartAllocation.map((entry, index) => (
-                      <Cell key={entry.name} fill={allocationColors[index % allocationColors.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => formatCurrency(Number(value), settings.mainCurrency)}
-                    contentStyle={{
-                      border: "1px solid #dce5db",
-                      borderRadius: 8,
-                      boxShadow: "0 12px 28px rgba(23, 32, 25, 0.14)",
-                      fontSize: 12,
-                      fontWeight: 800
+          <div className="allocation-bar-layout">
+            <div className="allocation-bar-container" aria-hidden="true">
+              {allocation.map((item, index) => {
+                const percent = allocationTotal > 0 ? (item.value / allocationTotal) * 100 : 0;
+                if (percent <= 0) return null;
+                return (
+                  <div
+                    key={item.name}
+                    className="allocation-bar-segment"
+                    style={{
+                      width: `${percent}%`,
+                      backgroundColor: allocationColors[index % allocationColors.length]
                     }}
-                    wrapperStyle={{ outline: "none" }}
+                    title={`${item.name}: ${formatRatioPercent(item.value / allocationTotal)}`}
                   />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="chart-center-label">
-                <span>สินทรัพย์รวม</span>
-                <strong>{formatCurrency(allocationTotal, settings.mainCurrency)}</strong>
-              </div>
+                );
+              })}
             </div>
-            <div className="allocation-list">
-              {allocation.map((item) => {
+            <div className="allocation-list-grid">
+              {allocation.map((item, index) => {
                 const percent = allocationTotal ? item.value / allocationTotal : 0;
                 return (
                   <div className="allocation-row" key={item.name}>
                     <span
                       className="allocation-dot"
-                      style={{ background: allocationColors[item.colorIndex % allocationColors.length] }}
+                      style={{ background: allocationColors[index % allocationColors.length] }}
                     />
                     <span>{item.name}</span>
                     <strong>{formatRatioPercent(percent)}</strong>
