@@ -1,6 +1,8 @@
 import type { FormEvent } from "react";
+import { useState } from "react";
 import type { Asset, Liability, Settings, Snapshot } from "../../domain/types";
 import { signOutUser } from "../../firebase/auth";
+import { generateWealthMarkdown } from "../../utils/aiExporter";
 import { createBackup, parseBackup } from "../../utils/backup";
 
 type SettingsScreenProps = {
@@ -24,6 +26,20 @@ export function SettingsScreen({
   onSaveLiability,
   onSaveSnapshot
 }: SettingsScreenProps) {
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
+
+  async function handleCopyToClipboard() {
+    try {
+      const md = generateWealthMarkdown(settings, assets, liabilities, snapshots);
+      await navigator.clipboard.writeText(md);
+      setCopyMessage("คัดลอกข้อมูลลง Clipboard สำเร็จ! นำไปวางในแชต AI เพื่อวิเคราะห์ได้เลย");
+      setTimeout(() => setCopyMessage(null), 4000);
+    } catch {
+      setCopyMessage("คัดลอกไม่สำเร็จ กรุณาลองอีกครั้ง");
+      setTimeout(() => setCopyMessage(null), 4000);
+    }
+  }
+
   async function handleSettingsSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -96,6 +112,18 @@ export function SettingsScreen({
             }}
           />
         </label>
+      </article>
+
+      <article className="panel">
+        <div className="section-heading">
+          <h2>วิเคราะห์พอร์ตด้วย AI</h2>
+          <span>Markdown</span>
+        </div>
+        <p className="empty-text">คัดลอกสรุปรายการสินทรัพย์ หนี้สิน และประวัติ snapshot ในรูปแบบ Markdown เพื่อนำไปใช้วางให้ AI (เช่น Gemini, ChatGPT, Claude) วิเคราะห์ได้ทันที</p>
+        <button className="primary-button" type="button" onClick={handleCopyToClipboard}>
+          คัดลอกข้อมูลสำหรับ AI
+        </button>
+        {copyMessage ? <p className="success-text" style={{ fontSize: "0.82rem", marginTop: "4px" }}>{copyMessage}</p> : null}
       </article>
 
       <article className="panel">
