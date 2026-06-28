@@ -3,7 +3,7 @@ import { sortAllocationByValue } from "../../domain/allocation";
 import { getTotalDepositAnnualReturn } from "../../domain/assets";
 import { calculateSnapshotSummary } from "../../domain/calculations";
 import type { Asset, Liability, Settings, Snapshot } from "../../domain/types";
-import { formatCurrency, formatDateLabel, formatPercent, formatRatioPercent } from "../../utils/format";
+import { formatCurrency, formatDateLabel, formatPercent, formatRatioPercent, todayId } from "../../utils/format";
 
 type DashboardProps = {
   assets: Asset[];
@@ -18,9 +18,10 @@ const allocationColors = ["#17633a", "#7f6a2f", "#3867a6", "#8b3f62", "#58635d",
 export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }: DashboardProps) {
   const summary = calculateSnapshotSummary(assets, liabilities);
   const totalDepositAnnualReturn = getTotalDepositAnnualReturn(assets);
-  const previous = snapshots.length >= 2 ? snapshots[snapshots.length - 2] : undefined;
   const latest = snapshots.length >= 1 ? snapshots[snapshots.length - 1] : undefined;
-  const comparisonBase = latest?.investableWealth ?? previous?.investableWealth ?? 0;
+  const today = todayId();
+  const latestNonToday = [...snapshots].reverse().find((s) => s.date !== today);
+  const comparisonBase = latestNonToday ? latestNonToday.investableWealth : (latest?.investableWealth ?? 0);
   const change = summary.investableWealth - comparisonBase;
   const allocation = sortAllocationByValue(
     assets
