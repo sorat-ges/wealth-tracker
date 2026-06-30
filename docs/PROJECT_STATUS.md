@@ -1,6 +1,6 @@
 # Wealth Tracker Project Status
 
-Last updated: 2026-06-28
+Last updated: 2026-06-30
 
 This document is a handoff note for the next AI agent session. It summarizes the current product, architecture, data model, deployment setup, and implementation decisions.
 
@@ -285,7 +285,8 @@ Shows:
 
 - Investable wealth hero with a premium background gradient and a glassmorphism change badge compared with the last non-today snapshot.
 - Total investable assets, liabilities, unrealized P/L, and expected annual return, each featuring high-quality Lucide icons.
-- Asset allocation donut chart optimized with a centered total asset value label, an expanded 12-color palette, and tail-grouping of small assets (< 3%) into "อื่น ๆ" to maintain chart legibility.
+- Asset allocation horizontal segmented bar chart (Option 2) optimized for mobile, which avoids text overlapping issues and stretches across the full panel width. It uses an expanded 12-color palette.
+- Asset list displayed in a neat, space-saving 2-column grid underneath the allocation bar.
 - Recent snapshots list.
 
 Recent fixes:
@@ -293,6 +294,7 @@ Recent fixes:
 - Allocation list is sorted by value descending.
 - Allocation percentages use ratio formatting correctly, e.g. `0.10` becomes `10.00%`, not `0.10%`.
 - Fixed the wealth change calculation to compare with the previous snapshot once today's snapshot is saved.
+- Fixed todayId timezone date mismatch bug (uses local year/month/date string instead of UTC, which caused the "+฿0" bug when UTC and local timezones differed).
 
 ### Assets Screen
 
@@ -309,10 +311,11 @@ Supports:
 - Assets grouped into panels by type.
 - Assets sorted by current value descending inside each group.
 - Edit asset from list using pencil icon.
-- Delete asset using trash icon.
+- Delete asset using trash icon with a browser `window.confirm` dialog prompt to avoid accidental deletes.
 - Edit asset master only. Existing snapshots are not modified.
-- Edit liability from list using pencil icon and inline form, mirroring the asset editing capability.
-- Delete liability using trash icon.
+- Edit liability from list using pencil icon and inline form.
+- Delete liability using trash icon with a browser `window.confirm` dialog prompt.
+- Displays asset group subtotals and the total liabilities subtotal alongside item counts inside each card category header.
 
 Current asset input behavior:
 
@@ -332,7 +335,7 @@ src/features/update/UpdateScreen.tsx
 
 Supports:
 
-- Select snapshot date.
+- Select snapshot date (defaults to local `todayId()`).
 - Enter current total value for each asset.
 - Enter current balance for each liability.
 - Save daily snapshot.
@@ -380,7 +383,13 @@ Supports:
 
 - Main currency setting.
 - JSON backup export/import.
+- AI analysis portfolio copy: generates a clean Markdown text summary containing wealth overview, active assets breakdown with P/L and returns, liabilities, and snapshot history, then writes it directly to the clipboard.
 - Sign out.
+
+### Privacy / Incognito Mode
+
+- Toggle button (Eye/EyeOff icon) placed in the global top header.
+- Uses `isPrivate` state (persisted to `localStorage`) to mask all monetary figures (e.g. balances, totals, chart tooltip values) across the Dashboard, Assets Screen, Update Screen, and Reports Screen with `••••`.
 
 ## PWA Status
 
@@ -438,17 +447,18 @@ Important recent CSS fixes:
 Last known pushed state:
 
 ```text
-origin/main is pushed through cb2a889 style: optimize asset allocation donut chart with grouping and center label
+origin/main is pushed through 172e5e3 fix: use local date string for todayId to resolve timezone mismatch on change metric
 ```
 
 Recent important commits:
 
 ```text
+172e5e3 fix: use local date string for todayId to resolve timezone mismatch on change metric
+6af6ee4 feat: add delete confirmation group subtotals and privacy incognito mode
+69345e2 feat: add copy wealth summary to clipboard for AI analysis
+42b238e style: align and center loading screen container horizontally and vertically
+7b66e16 style: replace donut chart with horizontal segmented bar allocation chart
 cb2a889 style: optimize asset allocation donut chart with grouping and center label
-02a3a5f style: revamp dashboard UI with premium aesthetics and lucide icons
-07fe96d fix: resolve wealth change comparison bug when today's snapshot exists
-4563e9d feat: add capability to edit liabilities from assets screen
-cdd0b52 style: refine snapshot row layout
 ```
 
 Always run:
@@ -472,8 +482,8 @@ npm run build
 Current baseline at last documentation update:
 
 ```text
-9 test files passed
-19 tests passed
+10 test files passed
+20 tests passed
 production build passed
 ```
 
@@ -492,8 +502,8 @@ Vite still warns that some chunks are larger than 500 kB. This is currently know
 
 ## Good Next Feature Candidates
 
-- Add confirm dialogs for asset/liability deletes.
-- Add total per asset group in Assets screen headers.
-- Add better mobile visual QA with Browser/Playwright if available.
 - Add Vercel deployment status instructions or GitHub Actions checks.
 - Split vendor chunks if bundle warning becomes a priority.
+- Implement asset "Archive / Deactivate" toggle to hide from daily update list while preserving historical metadata.
+- Add target asset allocation comparison & rebalancing guides.
+- Monthly growth projection simulator charts.
