@@ -20,6 +20,7 @@ import { Dashboard } from "../features/dashboard/Dashboard";
 import { ReportsScreen } from "../features/reports/ReportsScreen";
 import { SettingsScreen } from "../features/settings/SettingsScreen";
 import { UpdateScreen } from "../features/update/UpdateScreen";
+import { Eye, EyeOff } from "lucide-react";
 import { tabs, type TabId } from "./navigation";
 
 export function App() {
@@ -32,6 +33,18 @@ function SignedInApp({ user }: { user: User }) {
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [settings, setSettings] = useState<Settings>({ mainCurrency: "THB" });
+  const [isPrivate, setIsPrivate] = useState(() => {
+    return localStorage.getItem("wealth_tracker_privacy") === "true";
+  });
+
+  const togglePrivate = () => {
+    setIsPrivate((prev) => {
+      const next = !prev;
+      localStorage.setItem("wealth_tracker_privacy", String(next));
+      return next;
+    });
+  };
+
   const uid = user.uid;
   const displayName = user.displayName?.split(" ")[0] ?? user.email?.split("@")[0] ?? "ผู้ใช้";
 
@@ -81,6 +94,15 @@ function SignedInApp({ user }: { user: User }) {
           <p className="screen-kicker">Wealth Tracker</p>
           <strong>สวัสดี, {displayName}</strong>
         </div>
+        <button
+          className="icon-button"
+          type="button"
+          onClick={togglePrivate}
+          aria-label={isPrivate ? "แสดงข้อมูล" : "ซ่อนข้อมูล"}
+          style={{ width: "40px", height: "40px", borderRadius: "999px" }}
+        >
+          {isPrivate ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
       </header>
 
       {activeTab === "dashboard" ? (
@@ -90,16 +112,17 @@ function SignedInApp({ user }: { user: User }) {
           snapshots={snapshots}
           settings={settings}
           onUpdate={() => setActiveTab("update")}
+          isPrivate={isPrivate}
         />
       ) : null}
       {activeTab === "assets" ? (
-        <AssetsScreen assets={assets} liabilities={liabilities} settings={settings} {...actions} />
+        <AssetsScreen assets={assets} liabilities={liabilities} settings={settings} isPrivate={isPrivate} {...actions} />
       ) : null}
       {activeTab === "update" ? (
-        <UpdateScreen assets={assets} liabilities={liabilities} settings={settings} {...actions} />
+        <UpdateScreen assets={assets} liabilities={liabilities} settings={settings} isPrivate={isPrivate} {...actions} />
       ) : null}
       {activeTab === "reports" ? (
-        <ReportsScreen assets={assets} snapshots={snapshots} settings={settings} {...actions} />
+        <ReportsScreen assets={assets} snapshots={snapshots} settings={settings} isPrivate={isPrivate} {...actions} />
       ) : null}
       {activeTab === "settings" ? (
         <SettingsScreen assets={assets} liabilities={liabilities} snapshots={snapshots} settings={settings} {...actions} />

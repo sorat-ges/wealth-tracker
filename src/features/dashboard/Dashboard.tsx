@@ -11,6 +11,7 @@ type DashboardProps = {
   snapshots: Snapshot[];
   settings: Settings;
   onUpdate: () => void;
+  isPrivate?: boolean;
 };
 
 const allocationColors = [
@@ -28,7 +29,7 @@ const allocationColors = [
   "#634a36"  // Dark Bronze
 ];
 
-export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }: DashboardProps) {
+export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate, isPrivate }: DashboardProps) {
   const summary = calculateSnapshotSummary(assets, liabilities);
   const totalDepositAnnualReturn = getTotalDepositAnnualReturn(assets);
   const latest = snapshots.length >= 1 ? snapshots[snapshots.length - 1] : undefined;
@@ -36,6 +37,8 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
   const latestNonToday = [...snapshots].reverse().find((s) => s.date !== today);
   const comparisonBase = latestNonToday ? latestNonToday.investableWealth : (latest?.investableWealth ?? 0);
   const change = summary.investableWealth - comparisonBase;
+
+  const formatMoney = (val: number) => isPrivate ? "••••" : formatCurrency(val, settings.mainCurrency);
 
   const allocation = sortAllocationByValue(
     assets
@@ -54,13 +57,12 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
       <div className="summary-hero">
         <div>
           <p className="screen-kicker">Investable wealth</p>
-          <h1>{formatCurrency(summary.investableWealth, settings.mainCurrency)}</h1>
+          <h1>{formatMoney(summary.investableWealth)}</h1>
         </div>
         <div className={change >= 0 ? "metric-change gain" : "metric-change loss"}>
           <span>{change >= 0 ? "เพิ่มขึ้น" : "ลดลง"}</span>
           <strong>
-            {change >= 0 ? "+" : ""}
-            {formatCurrency(change, settings.mainCurrency)}
+            {isPrivate ? "••••" : (change >= 0 ? "+" : "") + formatCurrency(change, settings.mainCurrency)}
           </strong>
         </div>
       </div>
@@ -71,14 +73,14 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
             <span>สินทรัพย์ลงทุน</span>
             <Wallet size={16} className="metric-icon" />
           </div>
-          <strong>{formatCurrency(summary.totalInvestableAssets, settings.mainCurrency)}</strong>
+          <strong>{formatMoney(summary.totalInvestableAssets)}</strong>
         </article>
         <article className="metric-card">
           <div className="metric-header">
             <span>หนี้สิน</span>
             <CreditCard size={16} className="metric-icon" />
           </div>
-          <strong>{formatCurrency(summary.totalLiabilities, settings.mainCurrency)}</strong>
+          <strong>{formatMoney(summary.totalLiabilities)}</strong>
         </article>
         <article className="metric-card">
           <div className="metric-header">
@@ -91,7 +93,7 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
           </div>
           <div className="metric-pl-value">
             <strong className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
-              {formatCurrency(summary.totalUnrealizedPL, settings.mainCurrency)}
+              {formatMoney(summary.totalUnrealizedPL)}
             </strong>
             <small className={summary.totalUnrealizedPL >= 0 ? "gain" : "loss"}>
               {formatPercent(summary.totalUnrealizedPLPercent)}
@@ -103,7 +105,7 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
             <span>ผลตอบแทนเงินฝากรายปี</span>
             <PiggyBank size={16} className="metric-icon" />
           </div>
-          <strong>{formatCurrency(totalDepositAnnualReturn, settings.mainCurrency)}</strong>
+          <strong>{formatMoney(totalDepositAnnualReturn)}</strong>
         </article>
       </div>
 
@@ -165,7 +167,7 @@ export function Dashboard({ assets, liabilities, snapshots, settings, onUpdate }
           {snapshots.slice(-4).reverse().map((snapshot) => (
             <div className="list-row" key={snapshot.id}>
               <span>{formatDateLabel(snapshot.date)}</span>
-              <strong>{formatCurrency(snapshot.investableWealth, settings.mainCurrency)}</strong>
+              <strong>{formatMoney(snapshot.investableWealth)}</strong>
             </div>
           ))}
           {!snapshots.length ? <p className="empty-text">ยังไม่มีสแนปช็อต บันทึกอัปเดตวันนี้เพื่อเริ่มติดตาม</p> : null}

@@ -14,13 +14,15 @@ type ReportsScreenProps = {
   settings: Settings;
   onSaveSnapshot: (snapshot: Snapshot) => Promise<void>;
   onDeleteSnapshot: (snapshotId: string) => Promise<void>;
+  isPrivate?: boolean;
 };
 
-export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onDeleteSnapshot }: ReportsScreenProps) {
+export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onDeleteSnapshot, isPrivate }: ReportsScreenProps) {
   const [editingSnapshotId, setEditingSnapshotId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const formatMoney = (val: number) => isPrivate ? "••••" : formatCurrency(val, settings.mainCurrency);
   const trend = snapshots.map((snapshot) => ({
     date: formatDateLabel(snapshot.date),
     value: snapshot.investableWealth
@@ -124,7 +126,7 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
                 <CartesianGrid vertical={false} stroke="#dde3dc" />
                 <XAxis dataKey="date" tickLine={false} axisLine={false} fontSize={11} />
                 <YAxis hide domain={["dataMin", "dataMax"]} />
-                <Tooltip formatter={(value) => formatCurrency(Number(value), settings.mainCurrency)} />
+                <Tooltip formatter={(value) => isPrivate ? "••••" : formatCurrency(Number(value), settings.mainCurrency)} />
                 <Area type="monotone" dataKey="value" stroke="#17633a" fill="url(#wealthGradient)" strokeWidth={3} />
               </AreaChart>
             </ResponsiveContainer>
@@ -137,7 +139,7 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
       <article className="panel">
         <div className="section-heading">
           <h2>ผลตอบแทนเงินฝากรายปี</h2>
-          <span>{formatCurrency(totalDepositAnnualReturn, settings.mainCurrency)}</span>
+          <span>{formatMoney(totalDepositAnnualReturn)}</span>
         </div>
         {depositReturnRows.length ? (
           <div className="list-stack">
@@ -148,7 +150,7 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
                   <span>{row.annualReturnRate.toLocaleString("th-TH")}% ต่อปี</span>
                 </div>
                 <div className="row-actions">
-                  <span>{formatCurrency(row.annualReturn, settings.mainCurrency)}</span>
+                  <span>{formatMoney(row.annualReturn)}</span>
                 </div>
               </div>
             ))}
@@ -172,7 +174,7 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
                 <div className="pl-row" key={row.name}>
                   <div className="pl-row-header">
                     <strong>{row.name}</strong>
-                    <span className={isGain ? "gain" : "loss"}>{formatCurrency(row.value, settings.mainCurrency)}</span>
+                    <span className={isGain ? "gain" : "loss"}>{formatMoney(row.value)}</span>
                   </div>
                   <div className="pl-track" aria-hidden="true">
                     <span
@@ -203,12 +205,12 @@ export function ReportsScreen({ assets, snapshots, settings, onSaveSnapshot, onD
                 <div className="snapshot-main">
                   <strong>{formatDateLabel(snapshot.date)}</strong>
                   <span>
-                    สินทรัพย์ {formatCurrency(snapshot.totalInvestableAssets, settings.mainCurrency)} · หนี้{" "}
-                    {formatCurrency(snapshot.totalLiabilities, settings.mainCurrency)}
+                    สินทรัพย์ {formatMoney(snapshot.totalInvestableAssets)} · หนี้{" "}
+                    {formatMoney(snapshot.totalLiabilities)}
                   </span>
                 </div>
                 <div className="row-actions snapshot-actions">
-                  <span className="snapshot-value">{formatCurrency(snapshot.investableWealth, settings.mainCurrency)}</span>
+                  <span className="snapshot-value">{formatMoney(snapshot.investableWealth)}</span>
                   <button
                     className="icon-button"
                     type="button"

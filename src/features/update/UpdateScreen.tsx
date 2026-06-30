@@ -11,6 +11,7 @@ type UpdateScreenProps = {
   onSaveAsset: (asset: Asset) => Promise<void>;
   onSaveLiability: (liability: Liability) => Promise<void>;
   onSaveSnapshot: (snapshot: Snapshot) => Promise<void>;
+  isPrivate?: boolean;
 };
 
 export function UpdateScreen({
@@ -19,7 +20,8 @@ export function UpdateScreen({
   settings,
   onSaveAsset,
   onSaveLiability,
-  onSaveSnapshot
+  onSaveSnapshot,
+  isPrivate
 }: UpdateScreenProps) {
   const summary = calculateSnapshotSummary(assets, liabilities);
   const assetNameCounts = assets.reduce<Record<string, number>>((counts, asset) => {
@@ -73,7 +75,7 @@ export function UpdateScreen({
 
       <article className="summary-strip">
         <span>ความมั่งคั่งลงทุนปัจจุบัน</span>
-        <strong>{formatCurrency(summary.investableWealth, settings.mainCurrency)}</strong>
+        <strong>{isPrivate ? "••••" : formatCurrency(summary.investableWealth, settings.mainCurrency)}</strong>
       </article>
 
       <form className="panel form-grid" onSubmit={handleSubmit}>

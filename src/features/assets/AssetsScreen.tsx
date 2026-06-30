@@ -22,6 +22,7 @@ type AssetsScreenProps = {
   onDeleteAsset: (assetId: string) => Promise<void>;
   onSaveLiability: (liability: Liability) => Promise<void>;
   onDeleteLiability: (liabilityId: string) => Promise<void>;
+  isPrivate?: boolean;
 };
 
 const assetTypes: { value: AssetType; label: string }[] = [
@@ -52,10 +53,12 @@ export function AssetsScreen({
   onSaveAsset,
   onDeleteAsset,
   onSaveLiability,
-  onDeleteLiability
+  onDeleteLiability,
+  isPrivate
 }: AssetsScreenProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const formatMoney = (val: number) => isPrivate ? "••••" : formatCurrency(val, settings.mainCurrency);
   const [saving, setSaving] = useState(false);
   const [selectedAssetType, setSelectedAssetType] = useState<AssetType>("cash");
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
@@ -313,47 +316,54 @@ export function AssetsScreen({
         </article>
       ) : null}
 
-      {assetGroups.map((group) => (
-        <article className="panel" key={group.type}>
-          <div className="section-heading">
-            <h2>{assetTypeLabels[group.type]}</h2>
-            <span>{group.assets.length} รายการ</span>
-          </div>
-          <div className="list-stack">
-            {group.assets.map((asset) => (
-              <div className={editingAssetId === asset.id ? "list-row list-row-editing" : "list-row"} key={asset.id}>
-                <div>
-                  <strong>{asset.name}</strong>
-                  <span>{assetTypeLabels[asset.type]}</span>
-                  {getAssetAnnualReturn(asset) > 0 ? (
-                    <span>
-                      ผลตอบแทนรายปี {formatCurrency(getAssetAnnualReturn(asset), settings.mainCurrency)} (
-                      {getAssetAnnualReturnRate(asset)?.toLocaleString("th-TH")}%)
-                    </span>
-                  ) : null}
-                </div>
-                <div className="row-actions">
-                  <span>{formatCurrency(getAssetValue(asset), settings.mainCurrency)}</span>
-                  <button
-                    className="icon-button"
-                    type="button"
-                    onClick={() => {
-                      setEditingAssetId(asset.id);
-                      setEditingAssetType(asset.type);
-                    }}
-                    aria-label={`แก้ไข ${asset.name}`}
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    className="icon-button danger-button"
-                    type="button"
-                    onClick={() => onDeleteAsset(asset.id)}
-                    aria-label={`ลบ ${asset.name}`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
+      {assetGroups.map((group) => {
+        const groupTotal = group.assets.reduce((sum, asset) => sum + getAssetValue(asset), 0);
+        return (
+          <article className="panel" key={group.type}>
+            <div className="section-heading">
+              <h2>{assetTypeLabels[group.type]}</h2>
+              <span>{formatMoney(groupTotal)} · {group.assets.length} รายการ</span>
+            </div>
+            <div className="list-stack">
+              {group.assets.map((asset) => (
+                <div className={editingAssetId === asset.id ? "list-row list-row-editing" : "list-row"} key={asset.id}>
+                  <div>
+                    <strong>{asset.name}</strong>
+                    <span>{assetTypeLabels[asset.type]}</span>
+                    {getAssetAnnualReturn(asset) > 0 ? (
+                      <span>
+                        ผลตอบแทนรายปี {formatMoney(getAssetAnnualReturn(asset))} (
+                        {getAssetAnnualReturnRate(asset)?.toLocaleString("th-TH")}%)
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="row-actions">
+                    <span>{formatMoney(getAssetValue(asset))}</span>
+                    <button
+                      className="icon-button"
+                      type="button"
+                      onClick={() => {
+                        setEditingAssetId(asset.id);
+                        setEditingAssetType(asset.type);
+                      }}
+                      aria-label={`แก้ไข ${asset.name}`}
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      className="icon-button danger-button"
+                      type="button"
+                      onClick={() => {
+                        const confirmed = window.confirm(`คุณต้องการลบ "${asset.name}" ใช่หรือไม่?`);
+                        if (confirmed) {
+                          onDeleteAsset(asset.id);
+                        }
+                      }}
+                      aria-label={`ลบ ${asset.name}`}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 {editingAssetId === asset.id ? (
                   <form className="edit-form" onSubmit={handleAssetEditSubmit}>
                     <div className="section-heading">
@@ -405,12 +415,13 @@ export function AssetsScreen({
             ))}
           </div>
         </article>
-      ))}
+      );
+    })}
 
       <article className="panel">
         <div className="section-heading">
           <h2>หนี้สิน</h2>
-          <span>{liabilities.length}</span>
+          <span>{formatMoney(liabilities.reduce((sum, l) => sum + l.currentBalance, 0))} · {liabilities.length} รายการ</span>
         </div>
         <div className="list-stack">
           {liabilities.map((liability) => (
@@ -420,7 +431,7 @@ export function AssetsScreen({
                 <span>{liabilityTypeLabels[liability.type]}</span>
               </div>
               <div className="row-actions">
-                <span>{formatCurrency(liability.currentBalance, settings.mainCurrency)}</span>
+                <span>{formatMoney(liability.currentBalance)}</span>
                 <button
                   className="icon-button"
                   type="button"
@@ -434,7 +445,12 @@ export function AssetsScreen({
                 <button
                   className="icon-button danger-button"
                   type="button"
-                  onClick={() => onDeleteLiability(liability.id)}
+                  onClick={() => {
+                    const confirmed = window.confirm(`คุณต้องการลบ "${liability.name}" ใช่หรือไม่?`);
+                    if (confirmed) {
+                      onDeleteLiability(liability.id);
+                    }
+                  }}
                   aria-label={`ลบ ${liability.name}`}
                 >
                   <Trash2 size={16} />
