@@ -502,8 +502,9 @@ Vite still warns that some chunks are larger than 500 kB. This is currently know
 
 ## Good Next Feature Candidates
 
-- Add Vercel deployment status instructions or GitHub Actions checks.
-- Split vendor chunks if bundle warning becomes a priority.
-- Implement asset "Archive / Deactivate" toggle to hide from daily update list while preserving historical metadata.
-- Add target asset allocation comparison & rebalancing guides.
-- Monthly growth projection simulator charts.
+- **Asset "Archive / Deactivate" Toggle**: Allow users to deactivate sold-out assets instead of deleting them. This hides them from the active list and the daily Update Screen input forms, but preserves their historical name metadata for past snapshots and reporting.
+- **Target Asset Allocation & Rebalancing**: Allow users to set target percentages for each asset class (e.g. cash 20%, stock 50%, gold 10%, crypto 20%) and display rebalancing alerts showing how much the current portfolio deviates from the target.
+- **Wealth Growth Projection Simulator**: Add a simulator tool (compound interest math calculator) that predicts future wealth growth in 5, 10, or 20 years based on target expected returns (CAGR) and monthly savings contributions.
+- **Multi-Currency Support**: Support adding assets in foreign currencies (e.g. USD stocks) where users can input the current exchange rate during daily updates, auto-converting to the main display currency (THB) for reports and dashboards.
+- **Vercel deployment & CI**: Add Vercel deployment status checks or GitHub Actions for test validation.
+- **Bundle Optimization**: Split vendor chunks if bundle size warnings become a priority.
